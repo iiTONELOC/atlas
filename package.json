@@ -1,0 +1,39 @@
+{
+  "name": "atlas",
+  "private": true,
+  "type": "module",
+  "description": "GraphQL API for TrashScanner™",
+  "author": "Anthony Tropeano",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/iitoneloc/atlas.git"
+  },
+  "homepage": "https://github.com/iitoneloc/atlas",
+  "bugs": {
+    "url": "https://github.com/iitoneloc/atlas/issues"
+  },
+  "keywords": [
+    "graphql",
+    "api",
+    "bun",
+    "typescript",
+    "backend"
+  ],
+  "engines": {
+    "bun": ">=1.3.0"
+  },
+  "scripts": {
+    "dev": "bun --hot src/index.ts",
+    "build": "bun build src/index.ts --outdir dist",
+    "start": "bun dist/index.js",
+    "doc-up": "docker compose -f docker-compose.dev.yml up --build",
+    "doc-down": "docker compose -f docker-compose.dev.yml down",
+    "doc-delete": "bun run doc-down -v",
+    "doc-restart": "bun run doc-down && bun run doc-up"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.5",
+    "prettier": "^3.7.4",
+    "typescript": "^5.9.3"
+  }
+}

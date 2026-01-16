@@ -1,0 +1,9 @@
+node_modules
+bun.lock
+package-lock.json
+.vscode
+.DS_Store
+.env
+dist
+*.log
+db/
