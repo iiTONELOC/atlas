@@ -7,6 +7,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    container: oven/bun:1.3.6
     env:
       NODE_ENV: test
       DB_HOST: test_db
@@ -27,14 +28,7 @@ jobs:
           --health-interval=5s
           --health-timeout=3s
           --health-retries=10
-
     steps:
       - uses: actions/checkout@v4
-
-      - uses: oven-sh/setup-bun@v1
-        with:
-          bun-version: latest
-
       - run: bun install
-
       - run: bun test

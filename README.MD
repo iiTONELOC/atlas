@@ -19,7 +19,7 @@ All runtime configuration is controlled via environment variables defined in `.e
 - `DB_PORT`
 - `APP_PORT`
 
-An `.example.env` file is provided as a template. Copy it to `.env` and adjust values as needed.
+An `.env.test` file is provided as a template. Copy it to `.env` and adjust values as needed.
 
 ## Running the Dev Environment
 
@@ -63,6 +63,14 @@ Remove containers **and** database data:
 
 ```bash
 bun doc-delete
+```
+
+## Testing
+
+For local, dependency-free testing, use the following command to run the tests inside a Docker container:
+
+```bash
+bun doc-test-up
 ```
 
 ## Notes
