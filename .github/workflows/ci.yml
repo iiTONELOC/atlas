@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      NODE_ENV: test
+      DB_HOST: test_db
+      DB_PORT: 3306
+      DB_NAME: atlas_db_test
+      DB_USER: test_user
+      DB_PASSWORD: test_password
+    services:
+      test_db:
+        image: mariadb:12
+        env:
+          MARIADB_DATABASE: atlas_db_test
+          MARIADB_USER: test_user
+          MARIADB_PASSWORD: test_password
+          MARIADB_ROOT_PASSWORD: root_password
+        options: >-
+          --health-cmd="mariadb-admin ping -h localhost -utest_user -ptest_password"
+          --health-interval=5s
+          --health-timeout=3s
+          --health-retries=10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - run: bun install
+
+      - run: bun test

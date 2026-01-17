@@ -1,27 +1,26 @@
 services:
-  dev_app:
+  test_app:
     build:
       context: .
-      dockerfile: dockerfile.dev
+      dockerfile: dockerfile.test
     volumes:
       - .:/app
     ports:
-      - '${APP_PORT:-3000}:3000'
+      - '${APP_PORT:-3005}:3005'
     depends_on:
-      dev_db:
+      test_db:
         condition: service_healthy
 
-  dev_db:
+  test_db:
     image: mariadb:12
     environment:
-      MARIADB_DATABASE: ${DB_NAME:-atlas-dev}
-      MARIADB_USER: ${DB_USER:-atlasdev}
+      MARIADB_DATABASE: ${DB_NAME:-atlas-dev-test}
+      MARIADB_USER: ${DB_USER:-atlastest}
       MARIADB_PASSWORD: ${DB_PASSWORD:-p@$$w0rd}
       MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootp@$$w0rd}
     volumes:
-      - db-dev-data:/var/lib/mysql
-    ports:
-      - '${DB_PORT:-3306}:3306'
+      - db-test-data:/var/lib/mysql
+
     healthcheck:
       test: ['CMD-SHELL', 'mariadb-admin ping -h localhost -u$DB_USER -p$DB_PASSWORD || exit 1']
       interval: 5s
@@ -29,4 +28,4 @@ services:
       retries: 10
 
 volumes:
-  db-dev-data:
+  db-test-data:
