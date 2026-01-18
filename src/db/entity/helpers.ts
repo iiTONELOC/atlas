@@ -1,4 +1,4 @@
-import {IsDate, IsUUID} from 'class-validator';
+import {IsDate, IsOptional, IsUUID} from 'class-validator';
 import {
   BaseEntity,
   DeleteDateColumn,
@@ -25,6 +25,7 @@ export abstract class TimestampedEntity extends UUIDv4Entity {
 
 export abstract class SoftDeleteEntity extends TimestampedEntity {
   @DeleteDateColumn({nullable: true})
+  @IsOptional()
   @IsDate({message: 'DeletedAt must be a valid Date'})
   deletedAt!: Date | null;
 }

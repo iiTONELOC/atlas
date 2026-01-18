@@ -4,5 +4,6 @@ package-lock.json
 .vscode
 .DS_Store
 .env
+.env.local
 dist
 *.log

@@ -15,6 +15,8 @@ jobs:
       DB_NAME: atlas_db_test
       DB_USER: test_user
       DB_PASSWORD: test_password
+      DB_ROOT_PASSWORD: rootp@ssword
+
     services:
       test_db:
         image: mariadb:12
@@ -22,7 +24,7 @@ jobs:
           MARIADB_DATABASE: atlas_db_test
           MARIADB_USER: test_user
           MARIADB_PASSWORD: test_password
-          MARIADB_ROOT_PASSWORD: root_password
+          MARIADB_ROOT_PASSWORD: rootp@ssword
         options: >-
           --health-cmd="mariadb-admin ping -h localhost -utest_user -ptest_password"
           --health-interval=5s
@@ -31,4 +33,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: bun install
-      - run: bun test
+      - run: bun run tests
