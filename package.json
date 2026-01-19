@@ -27,7 +27,7 @@
     "dev": "bun --hot src/index.ts",
     "build": "bun build src/index.ts --outdir dist",
     "start": "bun dist/index.js",
-    "tests": " bun --env-file .env.test test",
+    "tests": " bun --env-file=.env.test test",
     "test-up": "docker compose --env-file .env.test -f docker-compose.test.yml up --build --abort-on-container-exit --exit-code-from test_app; bun test-delete",
     "test-dev": "docker compose --env-file=.env.test -f docker-compose.test-watch.yml up --build --abort-on-container-exit --exit-code-from test_app; bun doc-test-delete",
     "test-dev-delete": "docker compose --env-file .env.test -f docker-compose.test-watch.yml down -v",
