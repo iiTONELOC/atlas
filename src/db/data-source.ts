@@ -1,13 +1,14 @@
 import 'reflect-metadata';
 import {DataSource} from 'typeorm';
+import {DB_HOST, DB_NAME, DB_PORT, DB_USER, DB_PASSWORD} from '../utils/environment';
 
 export const AppDataSource = new DataSource({
   type: 'mariadb',
-  host: process.env.DB_HOST,
-  port: Number(process.env.DB_PORT),
-  username: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
+  host: DB_HOST,
+  port: DB_PORT,
+  username: DB_USER,
+  password: DB_PASSWORD,
+  database: DB_NAME,
   synchronize: true,
   logging: false,
   entities: ['src/entity/**/*.ts'],

@@ -1,4 +1,4 @@
-FROM oven/bun:latest 
+FROM oven/bun:latest
 
 WORKDIR /app
 
@@ -13,4 +13,4 @@ ENV NODE_ENV=test \
 COPY package.json bun.lockb* tsconfig.json ./
 RUN bun install
 
-CMD ["bun", "test"]
+CMD ["bun", "test", "--watch", "--poll"]

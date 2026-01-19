@@ -1,6 +1,7 @@
-import {Entity, Column} from 'typeorm';
+import {Entity, Column, OneToOne} from 'typeorm';
 import {IsEnum, IsAlphanumeric, IsOptional} from 'class-validator';
 import {SoftDeleteEntity} from './helpers';
+import type {Credentials} from './credentials';
 
 export enum AccountStatus {
   ACTIVE = 'ACTIVE',
@@ -14,13 +15,18 @@ export enum AccountStatus {
 @Entity()
 export class User extends SoftDeleteEntity {
   @Column('enum', {enum: AccountStatus, default: AccountStatus.PENDING})
-  @IsEnum(AccountStatus, {message: 'Invalid account status'})
+  @IsEnum(AccountStatus)
   accountStatus: AccountStatus = AccountStatus.PENDING;
 
   @Column('tinytext', {nullable: true, default: null})
   @IsOptional()
-  @IsAlphanumeric(undefined, {message: 'Display name must be alphanumeric'})
+  @IsAlphanumeric()
   displayName: string | null = null;
 
-  // id, CreatedAt, UpdatedAt, and DeletedAt are inherited from SoftDeleteEntity
+  @OneToOne(
+    () => require('./credentials').Credentials,
+    (credentials: Credentials) => credentials.user,
+    {cascade: true},
+  )
+  credentials!: Credentials;
 }

@@ -19,6 +19,11 @@ describe('User Entity Tests', () => {
     expect(displayNameColumn?.options.type).toBe('tinytext');
     expect(displayNameColumn?.options.nullable).toBe(true);
     expect(displayNameColumn?.options.default).toBe(null);
+
+    const relations = getMetadataArgsStorage().relations.filter(r => r.target === User);
+    const credentialsRelation = relations.find(r => r.propertyName === 'credentials');
+    expect(credentialsRelation).toBeDefined();
+    expect((credentialsRelation?.options as any).cascade).toBe(true);
   });
 
   test('User entity validator enforces constraints', async () => {

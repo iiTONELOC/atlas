@@ -3,7 +3,7 @@ FROM oven/bun:latest
 WORKDIR /app
 
 ENV NODE_ENV=development \
-    APP_PORT=${APP_PORT:-3000} \
+    APP_PORT=${APP_PORT:-5000} \
     DB_HOST=${DB_HOST:-"dev_db"} \
     DB_PORT=${DB_PORT:-3306} \
     DB_NAME=${DB_NAME:-"fallback_db"} \

@@ -1,15 +1,16 @@
 import {describe, expect, test} from 'bun:test';
 import {AppDataSource} from '../../src/db/data-source';
+import {DB_HOST, DB_NAME, DB_PORT, DB_USER, DB_PASSWORD} from '../../src/utils/environment';
 
 describe('Data Source Tests', () => {
   test('App Data Source Returns Correct Values', () => {
     const options = AppDataSource.options as any;
     expect(options.type).toBe('mariadb');
-    expect(options.host).toBe(process.env.DB_HOST);
-    expect(options.port).toBe(Number(process.env.DB_PORT));
-    expect(options.username).toBe(process.env.DB_USER);
-    expect(options.password).toBe(process.env.DB_PASSWORD);
-    expect(options.database).toBe(process.env.DB_NAME);
+    expect(options.host).toBe(DB_HOST);
+    expect(options.port).toBe(Number(DB_PORT));
+    expect(options.username).toBe(DB_USER);
+    expect(options.password).toBe(DB_PASSWORD);
+    expect(options.database).toBe(DB_NAME);
     expect(options.database).toInclude('test');
   });
 

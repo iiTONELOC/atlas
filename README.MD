@@ -24,7 +24,7 @@ An `.env.test` file is provided as a template. Copy it to `.env` and adjust valu
 ## Running the Dev Environment
 
 ```bash
-bun doc-up
+bun dev-up
 ```
 
 This command starts:
@@ -35,16 +35,16 @@ This command starts:
 
 ## Database Persistence
 
-Database data is stored in a **named Docker volume** declared as `db-data`, but **Compose will create it on the host with a project prefix**, typically:
+Database data is stored in a **named Docker volume** declared as `db-dev-data`, but **Compose will create it on the host with a project prefix**, typically:
 
-- `<project>_db-data` (example: `atlas_db-data`)
+- `<project>_db-dev-data` (example: `atlas_db-dev-data`)
 
 To find the exact volume name and location:
 
 ```bash
-docker volume ls | grep db-data
+docker volume ls | grep db-dev-data
 # then
-docker volume inspect <project>_db-data
+docker volume inspect <project>_db-dev-data
 ```
 
 ## Formatting
@@ -56,21 +56,28 @@ Prettier is installed as a dev dependency and configured via `.prettierrc.ts`.
 Stop containers:
 
 ```bash
-bun doc-down
+bun dev-down
 ```
 
 Remove containers **and** database data:
 
 ```bash
-bun doc-delete
+bun dev-delete
 ```
 
 ## Testing
 
-For local, dependency-free testing, use the following command to run the tests inside a Docker container:
+For local, dependency-free testing, use the following command(s) to run the tests inside a Docker container:
 
 ```bash
-bun doc-test-up
+# runs tests, stops containers after completion
+bun test-up
+
+# to run tests & watch for changes
+bun test-dev # use ctrl+c to stop
+
+# To remove any test container data
+bun test-delete
 ```
 
 ## Notes
