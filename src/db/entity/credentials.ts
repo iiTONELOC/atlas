@@ -1,9 +1,9 @@
-import {Entity, Column, BeforeInsert, BeforeUpdate, OneToOne, JoinColumn} from 'typeorm';
+import type {User} from './user';
 import {IsEmail} from 'class-validator';
 import {TimestampedEntity} from './helpers';
 import {hashPassword} from '../../utils/hashing';
 import {validatePassword} from '../../utils/password-check';
-import {User} from './user';
+import {Entity, Column, OneToOne, BeforeInsert, BeforeUpdate} from 'typeorm';
 
 // email and password for user authentication
 @Entity()
@@ -24,7 +24,9 @@ export class Credentials extends TimestampedEntity {
     }
   }
 
-  @OneToOne(() => User, user => user.credentials, {onDelete: 'CASCADE'})
-  @JoinColumn({name: 'userId', referencedColumnName: 'id'})
+  @OneToOne(() => require('./user').User, (user: User) => user.credentials, {
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
+  })
   user!: User;
 }
