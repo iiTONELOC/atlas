@@ -2,11 +2,19 @@ services:
   dev_app:
     build:
       context: .
-      dockerfile: dockerfile.dev
+      dockerfile: Dockerfile
     volumes:
       - .:/app
     ports:
-      - '${APP_PORT:-5000}:5000'
+      - '${APP_PORT:-5000}'
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      APP_PORT: ${APP_PORT:-5000}
+      DB_HOST: ${DB_HOST:-dev_db}
+      DB_PORT: ${DB_PORT:-3306}
+      DB_NAME: ${DB_NAME:-atlas_db}
+      DB_USER: ${DB_USER:-atlas_user}
+      DB_PASSWORD: ${DB_PASSWORD:-p@$$w0rd}
     depends_on:
       dev_db:
         condition: service_healthy
@@ -14,8 +22,8 @@ services:
   dev_db:
     image: mariadb:12
     environment:
-      MARIADB_DATABASE: ${DB_NAME:-atlas-dev}
-      MARIADB_USER: ${DB_USER:-atlasdev}
+      MARIADB_DATABASE: ${DB_NAME:-atlas_db}
+      MARIADB_USER: ${DB_USER:-atlas_user}
       MARIADB_PASSWORD: ${DB_PASSWORD:-p@$$w0rd}
       MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootp@$$w0rd}
     volumes:
@@ -23,7 +31,11 @@ services:
     ports:
       - '${DB_PORT:-3306}:3306'
     healthcheck:
-      test: ['CMD-SHELL', 'mariadb-admin ping -h localhost -u$DB_USER -p$DB_PASSWORD || exit 1']
+      test:
+        [
+          'CMD-SHELL',
+          'mariadb-admin ping -h localhost -u$$MARIADB_USER -p$$MARIADB_PASSWORD || exit 1',
+        ]
       interval: 5s
       timeout: 3s
       retries: 10

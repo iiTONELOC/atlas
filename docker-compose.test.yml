@@ -2,11 +2,19 @@ services:
   test_app:
     build:
       context: .
-      dockerfile: dockerfile.test
+      dockerfile: Dockerfile
     volumes:
       - .:/app
     ports:
-      - '${APP_PORT:-5005}:5005'
+      - '${APP_PORT:-5005}'
+    environment:
+      NODE_ENV: ${NODE_ENV:-test}
+      APP_PORT: ${APP_PORT:-5005}
+      DB_HOST: ${DB_HOST:-test_db}
+      DB_PORT: ${DB_PORT:-3306}
+      DB_NAME: ${DB_NAME:-atlas_db_test}
+      DB_USER: ${DB_USER:-test_user}
+      DB_PASSWORD: ${DB_PASSWORD:-test_password}
     depends_on:
       test_db:
         condition: service_healthy
@@ -14,15 +22,18 @@ services:
   test_db:
     image: mariadb:12
     environment:
-      MARIADB_DATABASE: ${DB_NAME:-atlas-dev-test}
-      MARIADB_USER: ${DB_USER:-atlastest}
-      MARIADB_PASSWORD: ${DB_PASSWORD:-p@$$w0rd}
+      MARIADB_DATABASE: ${DB_NAME:-atlas_db_test}
+      MARIADB_USER: ${DB_USER:-test_user}
+      MARIADB_PASSWORD: ${DB_PASSWORD:-test_password}
       MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootp@$$w0rd}
     volumes:
       - db-test-data:/var/lib/mysql
-
     healthcheck:
-      test: ['CMD-SHELL', 'mariadb-admin ping -h localhost -u$DB_USER -p$DB_PASSWORD || exit 1']
+      test:
+        [
+          'CMD-SHELL',
+          'mariadb-admin ping -h localhost -u$$MARIADB_USER -p$$MARIADB_PASSWORD || exit 1',
+        ]
       interval: 5s
       timeout: 3s
       retries: 10

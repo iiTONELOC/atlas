@@ -24,18 +24,18 @@
     "bun": ">=1.3.0"
   },
   "scripts": {
-    "dev": "bun --hot src/index.ts",
+    "dev": "bun --env-file=../env.local --hot src/index.ts",
     "build": "bun build src/index.ts --outdir dist",
     "start": "bun dist/index.js",
     "tests": " bun --env-file=.env.test test",
-    "test-up": "docker compose --env-file .env.test -f docker-compose.test.yml up --build --abort-on-container-exit --exit-code-from test_app; bun test-delete",
-    "test-dev": "docker compose --env-file=.env.test -f docker-compose.test-watch.yml up --build --abort-on-container-exit --exit-code-from test_app; bun doc-test-delete",
-    "test-dev-delete": "docker compose --env-file .env.test -f docker-compose.test-watch.yml down -v",
-    "test-delete": "docker compose --env-file .env.test -f docker-compose.test.yml down -v && bun run test-dev-delete",
-    "dev-up": "docker compose -f docker-compose.dev.yml up --build",
-    "dev-down": "docker compose -f docker-compose.dev.yml down",
-    "dev-delete": "docker compose -f docker-compose.dev.yml down -v",
-    "dev-restart": "bun run doc-down && bun run doc-up"
+    "docker:dev": "docker compose -env-file ../env.local -f docker-compose.dev.yml up --build",
+    "docker:dev-down": "docker compose -f docker-compose.dev.yml down",
+    "docker:dev-clean": "docker compose -f docker-compose.dev.yml down -v",
+    "docker:test": "docker compose --env-file .env.test -f docker-compose.test.yml run --rm test_app bun test",
+    "docker:test-watch": "docker compose --env-file .env.test -f docker-compose.test-watch.yml up --build",
+    "docker:test-clean": "docker compose -f docker-compose.test.yml down -v",
+    "docker:dev-shell": "docker compose -f docker-compose.dev.yml run --rm dev_app /bin/sh",
+    "docker:test-shell": "docker compose --env-file .env.test -f docker-compose.test.yml run --rm test_app /bin/sh"
   },
   "devDependencies": {
     "@types/bun": "^1.3.5",
