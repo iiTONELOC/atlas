@@ -63,10 +63,18 @@ export const DB_ROOT_PASSWORD = requireEnv('DB_ROOT_PASSWORD');
 export const PWD_PEPPER = requireEnv('PWD_PEPPER');
 export const APP_PORT = requireIntEnv('APP_PORT');
 export const DB_PORT = requireIntEnv('DB_PORT');
-export const BCRYPT_SALT_COST = (() => {
-  const cost = requireIntEnv('BCRYPT_SALT_COST');
-  if (cost < 10 || cost > 31) {
-    throw new Error('BCRYPT_SALT_COST must be an integer between 10 and 31');
+export const ARGON2ID_MEMORY = (() => {
+  const memory = requireIntEnv('ARGON2ID_MEMORY');
+  if (memory < 65536 || memory > 1048576) {
+    throw new Error('ARGON2ID_MEMORY must be between 65536 and 1048576');
   }
-  return cost;
+  return memory;
+})();
+
+export const ARGON2ID_TIME = (() => {
+  const time = requireIntEnv('ARGON2ID_TIME');
+  if (time < 1 || time > 10) {
+    throw new Error('ARGON2ID_TIME must be between 1 and 10');
+  }
+  return time;
 })();

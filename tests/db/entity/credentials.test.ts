@@ -43,7 +43,7 @@ describe('Credentials Entity Tests', () => {
     creds.email = 'user@test.com';
     creds.password = 'Str0ngPassphrase2025!';
     await creds.hashPassword();
-    expect(creds.password.startsWith('$2')).toBe(true);
+    expect(creds.password.startsWith('$argon2id$')).toBe(true);
   });
 
   test('password hashing is idempotent', async () => {

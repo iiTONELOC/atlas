@@ -18,7 +18,7 @@ export class Credentials extends TimestampedEntity {
   @BeforeInsert()
   @BeforeUpdate()
   async hashPassword() {
-    if (!this.password.startsWith('$2b$')) {
+    if (!this.password.startsWith('$argon2id$')) {
       await validatePassword(this.password);
       this.password = await hashPassword(this.password);
     }

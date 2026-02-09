@@ -14,7 +14,8 @@ const setAllRequiredEnvs = () => {
   process.env.DB_PASSWORD = 'test_password';
   process.env.DB_ROOT_PASSWORD = 'rootp@ssword';
   process.env.PWD_PEPPER = 'pepper';
-  process.env.BCRYPT_SALT_COST = '12';
+  process.env.ARGON2ID_MEMORY = '65536';
+  process.env.ARGON2ID_TIME = '3';
 };
 
 beforeEach(() => {
@@ -76,21 +77,42 @@ describe('Environment Utils Tests', () => {
     }
   });
 
-  test('BCRYPT_SALT_COST is valid integer between 10 and 31', async () => {
+  test('ARGON2ID_MEMORY is valid integer within range', async () => {
     setAllRequiredEnvs();
-    process.env.BCRYPT_SALT_COST = '12';
+    process.env.ARGON2ID_MEMORY = '65536';
 
-    const {BCRYPT_SALT_COST} = await loadEnv();
-    expect(BCRYPT_SALT_COST).toBe(12);
+    const {ARGON2ID_MEMORY} = await loadEnv();
+    expect(ARGON2ID_MEMORY).toBe(65536);
   });
 
-  describe('BCRYPT_SALT_COST fuzzing', () => {
-    const cases = ['not_a_number', '-5', '0', '9', '32', '12.5', '', ' ', '[]', '{}', '999999'];
+  describe('ARGON2ID_MEMORY fuzzing', () => {
+    const cases = ['not_a_number', '-5', '0', '65534', '1048577', '12.5', '', ' ', '[]', '{}'];
 
     for (const value of cases) {
       test(`throws for value "${value}"`, async () => {
         setAllRequiredEnvs();
-        process.env.BCRYPT_SALT_COST = value;
+        process.env.ARGON2ID_MEMORY = value;
+
+        await expect(loadEnv()).rejects.toThrow();
+      });
+    }
+  });
+
+  test('ARGON2ID_TIME is valid integer within range', async () => {
+    setAllRequiredEnvs();
+    process.env.ARGON2ID_TIME = '3';
+
+    const {ARGON2ID_TIME} = await loadEnv();
+    expect(ARGON2ID_TIME).toBe(3);
+  });
+
+  describe('ARGON2ID_TIME fuzzing', () => {
+    const cases = ['not_a_number', '-1', '0', '11', '12.5', '', ' ', '[]', '{}'];
+
+    for (const value of cases) {
+      test(`throws for value "${value}"`, async () => {
+        setAllRequiredEnvs();
+        process.env.ARGON2ID_TIME = value;
 
         await expect(loadEnv()).rejects.toThrow();
       });
