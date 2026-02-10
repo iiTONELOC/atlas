@@ -1,0 +1,101 @@
+erDiagram
+  USER {
+    uuid id
+    datetime createdAt
+    datetime updatedAt
+    datetime deletedAt
+    AccountStatus accountStatus
+    tinytext displayName
+    uuid credentialsId
+  }
+
+  CREDENTIALS {
+    uuid id
+    datetime createdAt
+    datetime updatedAt
+    tinytext email
+    tinytext password
+  }
+
+  LIST {
+    uuid id
+    datetime createdAt
+    datetime updatedAt
+    datetime deletedAt
+    uuid userId
+    tinytext name
+    boolean isDefault
+  }
+
+  LIST_ITEM {
+    uuid id
+    datetime createdAt
+    datetime updatedAt
+    datetime deletedAt
+    uuid listId
+    uuid productId
+    int quantity
+    text notes
+    boolean isComplete
+  }
+
+  PRODUCT {
+    uuid id
+    datetime createdAt
+    datetime updatedAt
+    datetime deletedAt
+    tinytext name
+    varchar barcode
+    uuid sourceId
+  }
+
+  SOURCE {
+    uuid id
+    datetime createdAt
+    datetime updatedAt
+    datetime deletedAt
+    SourceName name
+    tinytext url
+  }
+
+  USER_PRODUCT {
+    uuid id
+    datetime createdAt
+    datetime updatedAt
+    datetime deletedAt
+    uuid userId
+    uuid productDataId
+    tinytext productAlias
+  }
+
+  SESSION {
+    uuid id
+    datetime createdAt
+    datetime updatedAt
+    uuid userId
+    uuid tokenId
+    datetime expiresAt
+    boolean isRevoked
+    tinytext userAgent
+    varchar ipAddress
+  }
+
+  TOKEN {
+    uuid id
+    datetime createdAt
+    datetime updatedAt
+    varchar jti
+    varchar tokenHash
+    TokenType type
+    datetime expiresAt
+  }
+
+  CREDENTIALS ||--|| USER : has
+  USER ||--o{ LIST : owns
+  LIST ||--o{ LIST_ITEM : contains
+  USER_PRODUCT ||--o{ LIST_ITEM : references
+  SOURCE ||--o{ PRODUCT : provides
+  USER ||--o{ USER_PRODUCT : owns
+  PRODUCT ||--o{ USER_PRODUCT : references
+  USER ||--o{ SESSION : has
+  TOKEN ||--|| SESSION : has

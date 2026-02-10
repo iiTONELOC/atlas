@@ -41,6 +41,10 @@ describe('Session Entity Tests', () => {
     expect(tokenRelation).toBeDefined();
     expect(tokenRelation?.relationType).toBe('one-to-one');
     expect((tokenRelation?.options as any).cascade).toBe(true);
+
+    const joinColumns = getMetadataArgsStorage().joinColumns.filter(j => j.target === Session);
+    const tokenJoinColumn = joinColumns.find(j => j.propertyName === 'token');
+    expect(tokenJoinColumn).toBeDefined();
   });
 
   test('Session entity validator enforces constraints', async () => {

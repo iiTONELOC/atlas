@@ -1,0 +1,132 @@
+// Enums
+Enum AccountStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  DISABLED
+  PENDING
+  DELETED
+}
+
+Enum SourceName {
+  BARCODE_INDEX
+  UPC_ITEM_DB
+  BARCODE_SPIDER
+  USER_ENTERED
+}
+
+Enum TokenType {
+  ACCESS
+  REFRESH
+}
+
+// Tables
+Table User {
+  id uuid [pk]
+  createdAt datetime
+  updatedAt datetime
+  deletedAt datetime [null]
+
+  accountStatus AccountStatus [default: 'PENDING']
+  displayName tinytext [null]
+  credentialsId uuid [unique]
+}
+
+Table Credentials {
+  id uuid [pk]
+  createdAt datetime
+  updatedAt datetime
+
+  email tinytext [unique]
+  password tinytext
+}
+
+Table List {
+  id uuid [pk]
+  createdAt datetime
+  updatedAt datetime
+  deletedAt datetime [null]
+
+  userId uuid
+  name tinytext
+  isDefault boolean [default: false]
+}
+
+Table ListItem {
+  id uuid [pk]
+  createdAt datetime
+  updatedAt datetime
+  deletedAt datetime [null]
+
+  listId uuid
+  productId uuid
+  quantity int [default: 1]
+  notes text [null]
+  isComplete boolean [default: false]
+}
+
+Table Product {
+  id uuid [pk]
+  createdAt datetime
+  updatedAt datetime
+  deletedAt datetime [null]
+
+  name tinytext
+  barcode varchar(13) [unique]
+  sourceId uuid [null]
+}
+
+Table Source {
+  id uuid [pk]
+  createdAt datetime
+  updatedAt datetime
+  deletedAt datetime [null]
+
+  name SourceName
+  url tinytext
+}
+
+Table UserProduct {
+  id uuid [pk]
+  createdAt datetime
+  updatedAt datetime
+  deletedAt datetime [null]
+
+  userId uuid
+  productDataId uuid
+  productAlias tinytext [null]
+}
+
+Table Session {
+  id uuid [pk]
+  createdAt datetime
+  updatedAt datetime
+
+  userId uuid
+  tokenId uuid [unique]
+  expiresAt datetime
+  isRevoked boolean [default: false]
+  userAgent tinytext
+  ipAddress varchar(45)
+}
+
+Table Token {
+  id uuid [pk]
+  createdAt datetime
+  updatedAt datetime
+  jti varchar [unique]
+  tokenHash varchar
+  type TokenType
+  expiresAt datetime
+}
+
+// Relationships
+Ref: Credentials.id < User.credentialsId
+Ref: User.id < List.userId
+Ref: List.id < ListItem.listId
+Ref: UserProduct.id < ListItem.productId
+Ref: Source.id < Product.sourceId
+Ref: User.id < UserProduct.userId
+Ref: Product.id < UserProduct.productDataId
+Ref: User.id < Session.userId
+Ref: Token.id < Session.tokenId

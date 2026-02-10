@@ -1,8 +1,9 @@
 import type {List} from './list';
+import type {Session} from './session';
 import {SoftDeleteEntity} from './helpers';
 import type {Credentials} from './credentials';
 import type {UserProduct} from './userProduct';
-import {Entity, Column, OneToOne, OneToMany} from 'typeorm';
+import {Entity, Column, OneToOne, OneToMany, JoinColumn} from 'typeorm';
 import {IsEnum, IsAlphanumeric, IsOptional, IsString} from 'class-validator';
 
 export enum AccountStatus {
@@ -31,6 +32,7 @@ export class User extends SoftDeleteEntity {
     (credentials: Credentials) => credentials.user,
     {cascade: true},
   )
+  @JoinColumn()
   credentials!: Credentials;
 
   @OneToMany(() => require('./list').List, (list: List) => list.user)
@@ -41,6 +43,9 @@ export class User extends SoftDeleteEntity {
     (userProduct: UserProduct) => userProduct.user,
   )
   userProducts!: UserProduct[];
+
+  @OneToMany(() => require('./session').Session, (session: Session) => session.user)
+  sessions!: Session[];
 
   // id, createdAt, UpdatedAt, DeletedAt handled in SoftDeleteEntity
 }

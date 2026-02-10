@@ -10,10 +10,7 @@ export enum TokenType {
 
 @Entity()
 export class Token extends TimestampedEntity {
-  @OneToOne(() => require('./session').Session, (session: Session) => session.token, {
-    onDelete: 'CASCADE',
-    onUpdate: 'CASCADE',
-  })
+  @OneToOne(() => require('./session').Session, (session: Session) => session.token)
   session!: Session;
 
   @Column('varchar', {unique: true})

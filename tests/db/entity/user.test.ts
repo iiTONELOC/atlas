@@ -24,6 +24,14 @@ describe('User Entity Tests', () => {
     const credentialsRelation = relations.find(r => r.propertyName === 'credentials');
     expect(credentialsRelation).toBeDefined();
     expect((credentialsRelation?.options as any).cascade).toBe(true);
+
+    const sessionsRelation = relations.find(r => r.propertyName === 'sessions');
+    expect(sessionsRelation).toBeDefined();
+    expect(sessionsRelation?.relationType).toBe('one-to-many');
+
+    const joinColumns = getMetadataArgsStorage().joinColumns.filter(j => j.target === User);
+    const credentialsJoinColumn = joinColumns.find(j => j.propertyName === 'credentials');
+    expect(credentialsJoinColumn).toBeDefined();
   });
 
   test('User entity validator enforces constraints', async () => {

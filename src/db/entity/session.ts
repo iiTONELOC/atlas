@@ -2,7 +2,7 @@ import type {User} from './user';
 import type {Token} from './token';
 import {TimestampedEntity} from './helpers';
 import {IsString, IsBoolean, IsDate, IsIP, Length} from 'class-validator';
-import {Entity, Column, ManyToOne, OneToOne} from 'typeorm';
+import {Entity, Column, ManyToOne, OneToOne, JoinColumn} from 'typeorm';
 
 @Entity()
 export class Session extends TimestampedEntity {
@@ -15,6 +15,7 @@ export class Session extends TimestampedEntity {
   @OneToOne(() => require('./token').Token, (token: Token) => token.session, {
     cascade: true,
   })
+  @JoinColumn()
   token!: Token;
 
   @Column('datetime')
