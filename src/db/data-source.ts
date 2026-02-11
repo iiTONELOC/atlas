@@ -10,7 +10,7 @@ import {
   ListItem,
   UserProduct,
   Credentials,
-} from './entity';
+} from './entities';
 import {DB_HOST, DB_NAME, DB_PORT, DB_USER, DB_PASSWORD} from '../utils/environment';
 
 export const AppDataSource = new DataSource({

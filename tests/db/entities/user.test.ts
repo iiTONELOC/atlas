@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import {validate} from 'class-validator';
 import {getMetadataArgsStorage} from 'typeorm';
 import {describe, expect, test} from 'bun:test';
-import {AccountStatus, User} from '../../../src/db/entity/user';
+import {AccountStatus, User} from '../../../src/db/entities/user';
 
 describe('User Entity Tests', () => {
   test('User entity columns are defined correctly', () => {

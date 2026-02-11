@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import {validate} from 'class-validator';
 import {getMetadataArgsStorage} from 'typeorm';
 import {describe, expect, test} from 'bun:test';
-import {Source, SourceName} from '../../../src/db/entity/source';
+import {Source, SourceName} from '../../../src/db/entities/source';
 
 const initBase = (s: Source) => {
   s.id = '550e8400-e29b-41d4-a716-446655440000';
