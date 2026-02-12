@@ -2,7 +2,7 @@
 import {describe, test, expect, beforeAll, afterAll, beforeEach} from 'bun:test';
 import {DataSource} from 'typeorm';
 import {User, AccountStatus} from '../../../src/db/entities';
-import {getUserRepository, type UserRepository} from '../../../src/db/repositories/userRepository';
+import {getUserRepository} from '../../../src/db/repositories/userRepository';
 import {createTestDataSource, cleanupTestDataSource} from '../../setup';
 
 const TEST_USER_NAME = 'Test User';

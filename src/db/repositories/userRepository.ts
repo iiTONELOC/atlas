@@ -1,12 +1,9 @@
-// repositories/UserRepository.ts
 import {Repository} from 'typeorm';
 import {User} from '../entities';
+import type {CreateCredentialsRepoProps} from './credentialsRepository';
 
 export type CreateUserRepoProps = {
-  credentials: {
-    email: string;
-    password: string;
-  };
+  credentials: CreateCredentialsRepoProps;
   displayName?: string | null;
 };
 
@@ -61,4 +58,6 @@ export class UserRepository {
   }
 }
 
-export const getUserRepository = (repo: Repository<User>) => new UserRepository(repo);
+export const getUserRepository = (repo: Repository<User>) => {
+  return new UserRepository(repo);
+};
