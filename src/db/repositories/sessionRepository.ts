@@ -1,6 +1,6 @@
-import {Repository} from 'typeorm';
-import {validate} from 'class-validator';
+import {Repository, MoreThan} from 'typeorm';
 import {Session} from '../entities';
+import {validateEntity} from './validation';
 import {populateBaseEntityFields} from '../entities/helpers';
 
 export type CreateSessionRepoProps = {
@@ -26,23 +26,28 @@ export class SessionRepository {
       userAgent,
       ipAddress,
     });
-    populateBaseEntityFields(session);
 
-    const errors = await validate(session);
-    if (errors.length > 0) {
-      throw new Error(
-        `Validation failed: ${errors
-          .map(e => Object.values(e.constraints || {}))
-          .flat()
-          .join(', ')}`,
-      );
-    }
-
+    await validateEntity(populateBaseEntityFields(session));
     return this.repo.save(session);
   }
 
   findById(id: string) {
     return this.repo.findOne({where: {id}, relations: ['user', 'token']});
+  }
+
+  findByUserId(userId: string) {
+    return this.repo.find({where: {user: {id: userId}}, relations: ['user', 'token']});
+  }
+
+  findActiveByUserId(userId: string) {
+    return this.repo.find({
+      where: {
+        user: {id: userId},
+        isRevoked: false,
+        expiresAt: MoreThan(new Date()),
+      },
+      relations: ['user', 'token'],
+    });
   }
 
   async update(id: string, data: UpdateSessionRepoProps) {
@@ -68,16 +73,7 @@ export class SessionRepository {
       session.ipAddress = ipAddress;
     }
 
-    const errors = await validate(session);
-    if (errors.length > 0) {
-      throw new Error(
-        `Validation failed: ${errors
-          .map(e => Object.values(e.constraints || {}))
-          .flat()
-          .join(', ')}`,
-      );
-    }
-
+    await validateEntity(session);
     return this.repo.save(session);
   }
 
@@ -88,6 +84,15 @@ export class SessionRepository {
     }
     session.isRevoked = true;
     return this.repo.save(session);
+  }
+
+  async revokeAllByUserId(userId: string) {
+    const sessions = await this.repo.find({where: {user: {id: userId}, isRevoked: false}});
+    const revokedSessions = sessions.map(session => {
+      session.isRevoked = true;
+      return session;
+    });
+    return this.repo.save(revokedSessions);
   }
 
   async delete(id: string) {

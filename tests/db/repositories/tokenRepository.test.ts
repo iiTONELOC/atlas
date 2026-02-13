@@ -7,6 +7,7 @@ import {
   getSessionRepository,
   SessionRepository,
 } from '../../../src/db/repositories/sessionRepository';
+import {EntityValidationError} from '../../../src/db/repositories/errors';
 import {createTestDataSource, cleanupTestDataSource} from '../../setup';
 
 const TEST_USER_EMAIL = 'test@test.com';
@@ -235,7 +236,7 @@ describe('TokenRepository', () => {
     test('finds token by session id with relations', async () => {
       const expiresAt = new Date(Date.now() + 7200000);
 
-      const created = await tokenRepo.create({
+      await tokenRepo.create({
         sessionId: testSessionId,
         jti: TEST_JTI,
         tokenHash: TEST_TOKEN_HASH,
@@ -339,43 +340,55 @@ describe('TokenRepository', () => {
     describe('create validation', () => {
       test('rejects token with empty jti', async () => {
         const expiresAt = new Date(Date.now() + 7200000);
-        await expect(
-          tokenRepo.create({
+        try {
+          await tokenRepo.create({
             sessionId: testSessionId,
             jti: '',
             tokenHash: TEST_TOKEN_HASH,
             type: TEST_TOKEN_TYPE,
             expiresAt,
-          }),
-        ).rejects.toThrow('Validation failed');
+          });
+          throw new Error('Expected validation error');
+        } catch (error) {
+          expect(error).toBeInstanceOf(EntityValidationError);
+          expect((error as Error).message).toContain('Validation failed');
+        }
       });
 
       test('rejects token with empty tokenHash', async () => {
         const expiresAt = new Date(Date.now() + 7200000);
-        await expect(
-          tokenRepo.create({
+        try {
+          await tokenRepo.create({
             sessionId: testSessionId,
             jti: TEST_JTI,
             tokenHash: '',
             type: TEST_TOKEN_TYPE,
             expiresAt,
-          }),
-        ).rejects.toThrow('Validation failed');
+          });
+          throw new Error('Expected validation error');
+        } catch (error) {
+          expect(error).toBeInstanceOf(EntityValidationError);
+          expect((error as Error).message).toContain('Validation failed');
+        }
       });
 
       test('rejects token with invalid jti types', async () => {
         const expiresAt = new Date(Date.now() + 7200000);
         const invalidJtis = [null, undefined, 123, {}, [], true];
         for (const jti of invalidJtis) {
-          await expect(
-            tokenRepo.create({
+          try {
+            await tokenRepo.create({
               sessionId: testSessionId,
               jti: jti as any,
               tokenHash: TEST_TOKEN_HASH,
               type: TEST_TOKEN_TYPE,
               expiresAt,
-            }),
-          ).rejects.toThrow('Validation failed');
+            });
+            throw new Error('Expected validation error');
+          } catch (error) {
+            expect(error).toBeInstanceOf(EntityValidationError);
+            expect((error as Error).message).toContain('Validation failed');
+          }
         }
       });
 
@@ -383,15 +396,19 @@ describe('TokenRepository', () => {
         const expiresAt = new Date(Date.now() + 7200000);
         const invalidHashes = [null, undefined, 123, {}, [], true];
         for (const tokenHash of invalidHashes) {
-          await expect(
-            tokenRepo.create({
+          try {
+            await tokenRepo.create({
               sessionId: testSessionId,
               jti: TEST_JTI,
               tokenHash: tokenHash as any,
               type: TEST_TOKEN_TYPE,
               expiresAt,
-            }),
-          ).rejects.toThrow('Validation failed');
+            });
+            throw new Error('Expected validation error');
+          } catch (error) {
+            expect(error).toBeInstanceOf(EntityValidationError);
+            expect((error as Error).message).toContain('Validation failed');
+          }
         }
       });
 
@@ -399,30 +416,38 @@ describe('TokenRepository', () => {
         const expiresAt = new Date(Date.now() + 7200000);
         const invalidTypes = ['INVALID', 'TOKEN', null, undefined, 123];
         for (const type of invalidTypes) {
-          await expect(
-            tokenRepo.create({
+          try {
+            await tokenRepo.create({
               sessionId: testSessionId,
               jti: TEST_JTI,
               tokenHash: TEST_TOKEN_HASH,
               type: type as any,
               expiresAt,
-            }),
-          ).rejects.toThrow('Validation failed');
+            });
+            throw new Error('Expected validation error');
+          } catch (error) {
+            expect(error).toBeInstanceOf(EntityValidationError);
+            expect((error as Error).message).toContain('Validation failed');
+          }
         }
       });
 
       test('rejects token with invalid expiresAt types', async () => {
         const invalidDates = ['2024-01-01', 123, null, undefined, {}, [], true];
         for (const expiresAt of invalidDates) {
-          await expect(
-            tokenRepo.create({
+          try {
+            await tokenRepo.create({
               sessionId: testSessionId,
               jti: TEST_JTI,
               tokenHash: TEST_TOKEN_HASH,
               type: TEST_TOKEN_TYPE,
               expiresAt: expiresAt as any,
-            }),
-          ).rejects.toThrow('Validation failed');
+            });
+            throw new Error('Expected validation error');
+          } catch (error) {
+            expect(error).toBeInstanceOf(EntityValidationError);
+            expect((error as Error).message).toContain('Validation failed');
+          }
         }
       });
 

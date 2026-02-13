@@ -1,5 +1,5 @@
 import {Repository} from 'typeorm';
-import {validate} from 'class-validator';
+import {validateEntity} from './validation';
 import {Token, type TokenType} from '../entities';
 import {populateBaseEntityFields} from '../entities/helpers';
 
@@ -22,18 +22,8 @@ export class TokenRepository {
       type,
       expiresAt,
     });
-    populateBaseEntityFields(token);
 
-    const errors = await validate(token);
-    if (errors.length > 0) {
-      throw new Error(
-        `Validation failed: ${errors
-          .map(e => Object.values(e.constraints || {}))
-          .flat()
-          .join(', ')}`,
-      );
-    }
-
+    await validateEntity(populateBaseEntityFields(token));
     return this.repo.save(token);
   }
 

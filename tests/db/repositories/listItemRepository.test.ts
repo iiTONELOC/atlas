@@ -7,6 +7,7 @@ import {getListRepository} from '../../../src/db/repositories/listRepository';
 import {getUserRepository} from '../../../src/db/repositories/userRepository';
 import {ProductRepository} from '../../../src/db/repositories/productRepository';
 import {getUserProductRepository} from '../../../src/db/repositories/userProductRepository';
+import {EntityValidationError} from '../../../src/db/repositories/errors';
 
 const TEST_USER_EMAIL = 'test@test.com';
 const TEST_USER_PASSWORD = 'password123456789badpassword';
@@ -207,6 +208,175 @@ describe('ListItemRepository', () => {
     });
   });
 
+  describe('findByListId', () => {
+    test('finds list items by list id', async () => {
+      await listItemRepo.create({
+        userProductId: testUserProduct.id,
+        listId: testList.id,
+      });
+
+      const found = await listItemRepo.findByListId(testList.id);
+      expect(found).toBeDefined();
+      expect(Array.isArray(found)).toBe(true);
+      expect(found.length).toBe(1);
+    });
+
+    test('finds multiple list items for same list', async () => {
+      const product2 = await productRepo.create({
+        name: 'Product 2',
+        barcode: '9876543210987',
+      });
+
+      const userProduct2 = await userProductRepo.create({
+        userId: testUser.id,
+        productId: product2.id,
+      });
+
+      await listItemRepo.create({
+        userProductId: testUserProduct.id,
+        listId: testList.id,
+      });
+
+      await listItemRepo.create({
+        userProductId: userProduct2.id,
+        listId: testList.id,
+      });
+
+      const found = await listItemRepo.findByListId(testList.id);
+      expect(found.length).toBe(2);
+    });
+
+    test('returns empty array for list with no items', async () => {
+      const list2 = await listRepo.create({
+        name: 'Empty List',
+        userId: testUser.id,
+      });
+
+      const found = await listItemRepo.findByListId(list2.id);
+      expect(Array.isArray(found)).toBe(true);
+      expect(found.length).toBe(0);
+    });
+
+    test('returns list items with product and list relations', async () => {
+      await listItemRepo.create({
+        userProductId: testUserProduct.id,
+        listId: testList.id,
+      });
+
+      const found = await listItemRepo.findByListId(testList.id);
+      expect(found[0].product).toBeDefined();
+      expect(found[0].list).toBeDefined();
+    });
+
+    test('returns only items for specified list', async () => {
+      const list2 = await listRepo.create({
+        name: 'List 2',
+        userId: testUser.id,
+      });
+
+      await listItemRepo.create({
+        userProductId: testUserProduct.id,
+        listId: testList.id,
+      });
+
+      await listItemRepo.create({
+        userProductId: testUserProduct.id,
+        listId: list2.id,
+      });
+
+      const found = await listItemRepo.findByListId(testList.id);
+      expect(found.length).toBe(1);
+      expect(found[0].list.id).toBe(testList.id);
+    });
+  });
+
+  describe('findByUserProductId', () => {
+    test('finds list items by user product id', async () => {
+      await listItemRepo.create({
+        userProductId: testUserProduct.id,
+        listId: testList.id,
+      });
+
+      const found = await listItemRepo.findByUserProductId(testUserProduct.id);
+      expect(found).toBeDefined();
+      expect(Array.isArray(found)).toBe(true);
+      expect(found.length).toBe(1);
+    });
+
+    test('finds user product in multiple lists', async () => {
+      const list2 = await listRepo.create({
+        name: 'List 2',
+        userId: testUser.id,
+      });
+
+      await listItemRepo.create({
+        userProductId: testUserProduct.id,
+        listId: testList.id,
+      });
+
+      await listItemRepo.create({
+        userProductId: testUserProduct.id,
+        listId: list2.id,
+      });
+
+      const found = await listItemRepo.findByUserProductId(testUserProduct.id);
+      expect(found.length).toBe(2);
+    });
+
+    test('returns empty array for user product not in any list', async () => {
+      const product2 = await productRepo.create({
+        name: 'Product 2',
+        barcode: '9876543210987',
+      });
+
+      const userProduct2 = await userProductRepo.create({
+        userId: testUser.id,
+        productId: product2.id,
+      });
+
+      const found = await listItemRepo.findByUserProductId(userProduct2.id);
+      expect(Array.isArray(found)).toBe(true);
+      expect(found.length).toBe(0);
+    });
+
+    test('returns list items with product and list relations', async () => {
+      await listItemRepo.create({
+        userProductId: testUserProduct.id,
+        listId: testList.id,
+      });
+
+      const found = await listItemRepo.findByUserProductId(testUserProduct.id);
+      expect(found[0].product).toBeDefined();
+      expect(found[0].list).toBeDefined();
+    });
+
+    test('returns only items for specified user product', async () => {
+      const product2 = await productRepo.create({
+        name: 'Product 2',
+        barcode: '9876543210987',
+      });
+
+      const userProduct2 = await userProductRepo.create({
+        userId: testUser.id,
+        productId: product2.id,
+      });
+
+      await listItemRepo.create({
+        userProductId: testUserProduct.id,
+        listId: testList.id,
+      });
+
+      await listItemRepo.create({
+        userProductId: userProduct2.id,
+        listId: testList.id,
+      });
+
+      const found = await listItemRepo.findByUserProductId(testUserProduct.id);
+      expect(found.length).toBe(1);
+      expect(found[0].product.id).toBe(testUserProduct.id);
+    });
+  });
+
   describe('update', () => {
     test('updates list item quantity', async () => {
       const created = await listItemRepo.create({
@@ -350,39 +520,51 @@ describe('ListItemRepository', () => {
       test('rejects list item with invalid quantity types', async () => {
         const invalidQuantities = ['5', true, {}, [], null];
         for (const quantity of invalidQuantities) {
-          await expect(
-            listItemRepo.create({
+          try {
+            await listItemRepo.create({
               userProductId: testUserProduct.id,
               listId: testList.id,
               quantity: quantity as any,
-            }),
-          ).rejects.toThrow('Validation failed');
+            });
+            throw new Error('Expected validation error');
+          } catch (error) {
+            expect(error).toBeInstanceOf(EntityValidationError);
+            expect((error as Error).message).toContain('Validation failed');
+          }
         }
       });
 
       test('rejects list item with invalid isComplete types', async () => {
         const invalidCompletes = ['true', 'yes', 1, 0, {}, []];
         for (const isComplete of invalidCompletes) {
-          await expect(
-            listItemRepo.create({
+          try {
+            await listItemRepo.create({
               userProductId: testUserProduct.id,
               listId: testList.id,
               isComplete: isComplete as any,
-            }),
-          ).rejects.toThrow('Validation failed');
+            });
+            throw new Error('Expected validation error');
+          } catch (error) {
+            expect(error).toBeInstanceOf(EntityValidationError);
+            expect((error as Error).message).toContain('Validation failed');
+          }
         }
       });
 
       test('rejects list item with invalid notes types', async () => {
         const invalidNotes = [123, {}, [], true];
         for (const notes of invalidNotes) {
-          await expect(
-            listItemRepo.create({
+          try {
+            await listItemRepo.create({
               userProductId: testUserProduct.id,
               listId: testList.id,
               notes: notes as any,
-            }),
-          ).rejects.toThrow('Validation failed');
+            });
+            throw new Error('Expected validation error');
+          } catch (error) {
+            expect(error).toBeInstanceOf(EntityValidationError);
+            expect((error as Error).message).toContain('Validation failed');
+          }
         }
       });
 
@@ -409,9 +591,13 @@ describe('ListItemRepository', () => {
 
         const invalidQuantities = ['5', true, {}, []];
         for (const quantity of invalidQuantities) {
-          await expect(
-            listItemRepo.update(created.id, {quantity: quantity as any}),
-          ).rejects.toThrow('Validation failed');
+          try {
+            await listItemRepo.update(created.id, {quantity: quantity as any});
+            throw new Error('Expected validation error');
+          } catch (error) {
+            expect(error).toBeInstanceOf(EntityValidationError);
+            expect((error as Error).message).toContain('Validation failed');
+          }
         }
       });
 
@@ -423,9 +609,13 @@ describe('ListItemRepository', () => {
 
         const invalidCompletes = ['true', 1, 0, {}];
         for (const isComplete of invalidCompletes) {
-          await expect(
-            listItemRepo.update(created.id, {isComplete: isComplete as any}),
-          ).rejects.toThrow('Validation failed');
+          try {
+            await listItemRepo.update(created.id, {isComplete: isComplete as any});
+            throw new Error('Expected validation error');
+          } catch (error) {
+            expect(error).toBeInstanceOf(EntityValidationError);
+            expect((error as Error).message).toContain('Validation failed');
+          }
         }
       });
     });

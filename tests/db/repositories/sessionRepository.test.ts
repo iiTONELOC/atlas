@@ -147,6 +147,139 @@ describe('SessionRepository', () => {
     });
   });
 
+  describe('findByUserId', () => {
+    test('finds sessions by user id', async () => {
+      const expiresAt = new Date(Date.now() + 3600000);
+
+      await sessionRepo.create({
+        userId: testUserId,
+        expiresAt,
+        userAgent: TEST_USER_AGENT,
+        ipAddress: TEST_IP_ADDRESS,
+      });
+
+      const found = await sessionRepo.findByUserId(testUserId);
+      expect(found).toBeDefined();
+      expect(Array.isArray(found)).toBe(true);
+      expect(found.length).toBe(1);
+    });
+
+    test('finds multiple sessions for same user', async () => {
+      const expiresAt1 = new Date(Date.now() + 3600000);
+      const expiresAt2 = new Date(Date.now() + 7200000);
+
+      await sessionRepo.create({
+        userId: testUserId,
+        expiresAt: expiresAt1,
+        userAgent: 'Agent1',
+        ipAddress: '192.168.1.1',
+      });
+
+      await sessionRepo.create({
+        userId: testUserId,
+        expiresAt: expiresAt2,
+        userAgent: 'Agent2',
+        ipAddress: '192.168.1.2',
+      });
+
+      const found = await sessionRepo.findByUserId(testUserId);
+      expect(found.length).toBe(2);
+    });
+
+    test('returns empty array for user with no sessions', async () => {
+      const found = await sessionRepo.findByUserId('550e8400-e29b-41d4-a716-446655440000');
+      expect(Array.isArray(found)).toBe(true);
+      expect(found.length).toBe(0);
+    });
+
+    test('returns sessions with user and token relations', async () => {
+      const expiresAt = new Date(Date.now() + 3600000);
+
+      await sessionRepo.create({
+        userId: testUserId,
+        expiresAt,
+        userAgent: TEST_USER_AGENT,
+        ipAddress: TEST_IP_ADDRESS,
+      });
+
+      const found = await sessionRepo.findByUserId(testUserId);
+      expect(found[0].user).toBeDefined();
+    });
+  });
+
+  describe('findActiveByUserId', () => {
+    test('finds only non-revoked and non-expired sessions', async () => {
+      const futureDate = new Date(Date.now() + 3600000);
+
+      await sessionRepo.create({
+        userId: testUserId,
+        expiresAt: futureDate,
+        userAgent: TEST_USER_AGENT,
+        ipAddress: TEST_IP_ADDRESS,
+      });
+
+      const found = await sessionRepo.findActiveByUserId(testUserId);
+      expect(found.length).toBe(1);
+    });
+
+    test('excludes revoked sessions', async () => {
+      const futureDate = new Date(Date.now() + 3600000);
+
+      const session = await sessionRepo.create({
+        userId: testUserId,
+        expiresAt: futureDate,
+        userAgent: TEST_USER_AGENT,
+        ipAddress: TEST_IP_ADDRESS,
+      });
+
+      await sessionRepo.revoke(session.id);
+
+      const found = await sessionRepo.findActiveByUserId(testUserId);
+      expect(found.length).toBe(0);
+    });
+
+    test('excludes expired sessions', async () => {
+      const pastDate = new Date(Date.now() - 3600000);
+
+      await sessionRepo.create({
+        userId: testUserId,
+        expiresAt: pastDate,
+        userAgent: TEST_USER_AGENT,
+        ipAddress: TEST_IP_ADDRESS,
+      });
+
+      const found = await sessionRepo.findActiveByUserId(testUserId);
+      expect(found.length).toBe(0);
+    });
+
+    test('returns multiple active sessions', async () => {
+      const futureDate = new Date(Date.now() + 3600000);
+
+      await sessionRepo.create({
+        userId: testUserId,
+        expiresAt: futureDate,
+        userAgent: 'Agent1',
+        ipAddress: '192.168.1.1',
+      });
+
+      await sessionRepo.create({
+        userId: testUserId,
+        expiresAt: futureDate,
+        userAgent: 'Agent2',
+        ipAddress: '192.168.1.2',
+      });
+
+      const found = await sessionRepo.findActiveByUserId(testUserId);
+      expect(found.length).toBe(2);
+    });
+
+    test('returns empty array when no active sessions exist', async () => {
+      const found = await sessionRepo.findActiveByUserId(testUserId);
+      expect(Array.isArray(found)).toBe(true);
+      expect(found.length).toBe(0);
+    });
+  });
+
   describe('update', () => {
     test('updates session expiresAt', async () => {
       const expiresAt = new Date(Date.now() + 3600000);
@@ -314,6 +447,93 @@ describe('SessionRepository', () => {
       await expect(sessionRepo.revoke('550e8400-e29b-41d4-a716-446655440000')).rejects.toThrow(
         'Session not found',
       );
+    });
+  });
+
+  describe('revokeAllByUserId', () => {
+    test('revokes all active sessions for user', async () => {
+      const futureDate = new Date(Date.now() + 3600000);
+
+      await sessionRepo.create({
+        userId: testUserId,
+        expiresAt: futureDate,
+        userAgent: 'Agent1',
+        ipAddress: '192.168.1.1',
+      });
+
+      await sessionRepo.create({
+        userId: testUserId,
+        expiresAt: futureDate,
+        userAgent: 'Agent2',
+        ipAddress: '192.168.1.2',
+      });
+
+      const revokedSessions = await sessionRepo.revokeAllByUserId(testUserId);
+      expect(revokedSessions.length).toBe(2);
+      expect(revokedSessions.every(s => s.isRevoked)).toBe(true);
+
+      const activeSessions = await sessionRepo.findActiveByUserId(testUserId);
+      expect(activeSessions.length).toBe(0);
+    });
+
+    test('does not affect already revoked sessions', async () => {
+      const futureDate = new Date(Date.now() + 3600000);
+
+      const session1 = await sessionRepo.create({
+        userId: testUserId,
+        expiresAt: futureDate,
+        userAgent: 'Agent1',
+        ipAddress: '192.168.1.1',
+      });
+
+      await sessionRepo.revoke(session1.id);
+
+      await sessionRepo.create({
+        userId: testUserId,
+        expiresAt: futureDate,
+        userAgent: 'Agent2',
+        ipAddress: '192.168.1.2',
+      });
+
+      const revokedSessions = await sessionRepo.revokeAllByUserId(testUserId);
+      expect(revokedSessions.length).toBe(1);
+    });
+
+    test('returns empty array when no active sessions exist', async () => {
+      const revokedSessions = await sessionRepo.revokeAllByUserId(testUserId);
+      expect(Array.isArray(revokedSessions)).toBe(true);
+      expect(revokedSessions.length).toBe(0);
+    });
+
+    test('does not affect other users sessions', async () => {
+      const user2 = await userRepo.create({
+        credentials: {
+          email: 'user2@test.com',
+          password: TEST_USER_PASSWORD,
+        },
+      });
+
+      const futureDate = new Date(Date.now() + 3600000);
+
+      await sessionRepo.create({
+        userId: testUserId,
+        expiresAt: futureDate,
+        userAgent: 'User1Agent',
+        ipAddress: '192.168.1.1',
+      });
+
+      await sessionRepo.create({
+        userId: user2.id,
+        expiresAt: futureDate,
+        userAgent: 'User2Agent',
+        ipAddress: '192.168.1.2',
+      });
+
+      await sessionRepo.revokeAllByUserId(testUserId);
+
+      const user2Sessions = await sessionRepo.findActiveByUserId(user2.id);
+      expect(user2Sessions.length).toBe(1);
+      expect(user2Sessions[0].isRevoked).toBe(false);
     });
   });
 

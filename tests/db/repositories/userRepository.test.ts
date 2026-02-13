@@ -265,6 +265,42 @@ describe('UserRepository', () => {
     });
   });
 
+  describe('delete', () => {
+    test('soft deletes user', async () => {
+      const user = await userRepo.create({
+        credentials: {
+          email: TEST_USER_EMAIL,
+          password: TEST_USER_PASSWORD,
+        },
+      });
+
+      await userRepo.delete(user.id);
+
+      const found = await userRepo.findById(user.id);
+      expect(found).toBeNull();
+    });
+
+    test('throws error when deleting non-existent user', async () => {
+      await expect(userRepo.delete('550e8400-e29b-41d4-a716-446655440000')).rejects.toThrow(
+        'User not found',
+      );
+    });
+
+    test('returns deleted user', async () => {
+      const user = await userRepo.create({
+        credentials: {
+          email: TEST_USER_EMAIL,
+          password: TEST_USER_PASSWORD,
+        },
+      });
+
+      const deleted = await userRepo.delete(user.id);
+      expect(deleted).toBeDefined();
+      expect(deleted.id).toBe(user.id);
+      expect(deleted.deletedAt).toBeDefined();
+    });
+  });
+
   describe('validation', () => {
     describe('create validation', () => {
       test('rejects user with invalid displayName types', async () => {

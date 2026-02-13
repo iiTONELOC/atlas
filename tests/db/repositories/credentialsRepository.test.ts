@@ -6,6 +6,7 @@ import {
   CredentialsRepository,
   getCredentialsRepository,
 } from '../../../src/db/repositories/credentialsRepository';
+import {EntityValidationError} from '../../../src/db/repositories/errors';
 
 const TEST_EMAIL = 'test@test.com';
 const TEST_PASSWORD = 'password123456789badpassword';
@@ -111,6 +112,30 @@ describe('CredentialsRepository', () => {
       const found = await credentialsRepo.findByEmail('TEST@EXAMPLE.COM');
       expect(found).toBeDefined();
       expect(found?.id).toBe(created.id);
+    });
+  });
+
+  describe('findById', () => {
+    test('finds credentials by id', async () => {
+      const created = await credentialsRepo.create({
+        email: TEST_EMAIL,
+        password: TEST_PASSWORD,
+      });
+
+      const found = await credentialsRepo.findById(created.id);
+      expect(found).toBeDefined();
+      expect(found?.id).toBe(created.id);
+      expect(found?.email).toBe(TEST_EMAIL);
+    });
+
+    test('returns null for non-existent id', async () => {
+      const found = await credentialsRepo.findById('550e8400-e29b-41d4-a716-446655440000');
+      expect(found).toBeNull();
+    });
+
+    test('returns null for invalid uuid format', async () => {
+      const found = await credentialsRepo.findById('not-a-uuid');
+      expect(found).toBeNull();
     });
   });
 
@@ -224,8 +249,6 @@ describe('CredentialsRepository', () => {
         password: TEST_PASSWORD,
       });
 
-      const originalUpdatedAt = created.updatedAt;
-
       // Delay to ensure timestamp difference
       await new Promise(resolve => setTimeout(resolve, 100));
 
@@ -275,24 +298,30 @@ describe('CredentialsRepository', () => {
       test('rejects credentials with invalid email', async () => {
         const invalidEmails = ['bad-email', 'no-at-sign', '@nodomain', 'spaces in@email.com'];
         for (const email of invalidEmails) {
-          await expect(
-            credentialsRepo.create({
+          try {
+            await credentialsRepo.create({
               email,
               password: TEST_PASSWORD,
-            }),
-          ).rejects.toThrow();
+            });
+            throw new Error('Expected validation error');
+          } catch (error) {
+            expect(error).toBeInstanceOf(EntityValidationError);
+          }
         }
       });
 
       test('rejects credentials with invalid email types', async () => {
         const invalidEmails = [null, undefined, 123, {}, [], true];
         for (const email of invalidEmails) {
-          await expect(
-            credentialsRepo.create({
+          try {
+            await credentialsRepo.create({
               email: email as any,
               password: TEST_PASSWORD,
-            }),
-          ).rejects.toThrow();
+            });
+            throw new Error('Expected validation error');
+          } catch (error) {
+            expect(error).toBeInstanceOf(EntityValidationError);
+          }
         }
       });
 
@@ -321,7 +350,12 @@ describe('CredentialsRepository', () => {
 
         const invalidEmails = ['bad-email', 'no-at-sign', '@nodomain'];
         for (const email of invalidEmails) {
-          await expect(credentialsRepo.update(created.id, {email})).rejects.toThrow();
+          try {
+            await credentialsRepo.update(created.id, {email});
+            throw new Error('Expected validation error');
+          } catch (error) {
+            expect(error).toBeInstanceOf(EntityValidationError);
+          }
         }
       });
 
@@ -333,9 +367,13 @@ describe('CredentialsRepository', () => {
 
         const invalidEmails = [null, 123, {}, []];
         for (const email of invalidEmails) {
-          await expect(credentialsRepo.update(created.id, {email: email as any})).rejects.toThrow(
-            'Validation failed',
-          );
+          try {
+            await credentialsRepo.update(created.id, {email: email as any});
+            throw new Error('Expected validation error');
+          } catch (error) {
+            expect(error).toBeInstanceOf(EntityValidationError);
+            expect((error as Error).message).toContain('Validation failed');
+          }
         }
       });
     });

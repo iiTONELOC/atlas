@@ -1,5 +1,5 @@
 import {Repository} from 'typeorm';
-import {validate} from 'class-validator';
+import {validateEntity} from './validation';
 import {Source, type SourceName} from '../entities';
 import {populateBaseEntityFields} from '../entities/helpers';
 
@@ -16,18 +16,8 @@ export class SourceRepository {
       name,
       url,
     });
-    populateBaseEntityFields(source);
 
-    const errors = await validate(source);
-    if (errors.length > 0) {
-      throw new Error(
-        `Validation failed: ${errors
-          .map(e => Object.values(e.constraints || {}))
-          .flat()
-          .join(', ')}`,
-      );
-    }
-
+    await validateEntity(populateBaseEntityFields(source));
     return this.repo.save(source);
   }
 
@@ -48,16 +38,7 @@ export class SourceRepository {
       source.url = url;
     }
 
-    const errors = await validate(source);
-    if (errors.length > 0) {
-      throw new Error(
-        `Validation failed: ${errors
-          .map(e => Object.values(e.constraints || {}))
-          .flat()
-          .join(', ')}`,
-      );
-    }
-
+    await validateEntity(source);
     return this.repo.save(source);
   }
 

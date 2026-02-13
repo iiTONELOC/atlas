@@ -1,6 +1,6 @@
 import {Repository} from 'typeorm';
-import {validate} from 'class-validator';
 import {User} from '../entities';
+import {validateEntity} from './validation';
 import {populateBaseEntityFields} from '../entities/helpers';
 import type {CreateCredentialsRepoProps} from './credentialsRepository';
 
@@ -19,18 +19,8 @@ export class UserRepository {
 
   async create({credentials, displayName}: CreateUserRepoProps) {
     const user = this.repo.create({credentials, displayName});
-    populateBaseEntityFields(user);
 
-    const errors = await validate(user);
-    if (errors.length > 0) {
-      throw new Error(
-        `Validation failed: ${errors
-          .map(e => Object.values(e.constraints || {}))
-          .flat()
-          .join(', ')}`,
-      );
-    }
-
+    await validateEntity(populateBaseEntityFields(user));
     return this.repo.save(user);
   }
 
@@ -75,17 +65,16 @@ export class UserRepository {
       user.displayName = displayName;
     }
 
-    const errors = await validate(user);
-    if (errors.length > 0) {
-      throw new Error(
-        `Validation failed: ${errors
-          .map(e => Object.values(e.constraints || {}))
-          .flat()
-          .join(', ')}`,
-      );
-    }
-
+    await validateEntity(user);
     return this.repo.save(user);
+  }
+
+  async delete(id: string) {
+    const user = await this.findById(id);
+    if (!user) {
+      throw new Error('User not found');
+    }
+    return this.repo.softRemove(user);
   }
 }
 

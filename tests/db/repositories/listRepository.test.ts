@@ -3,6 +3,7 @@ import {DataSource} from 'typeorm';
 import {List, User} from '../../../src/db/entities';
 import {getListRepository, ListRepository} from '../../../src/db/repositories/listRepository';
 import {getUserRepository} from '../../../src/db/repositories/userRepository';
+import {EntityValidationError} from '../../../src/db/repositories/errors';
 import {createTestDataSource, cleanupTestDataSource} from '../../setup';
 
 const TEST_LIST_NAME = 'Test List';
@@ -225,6 +226,68 @@ describe('ListRepository', () => {
     });
   });
 
+  describe('findDefaultByUserId', () => {
+    test('finds default list for user', async () => {
+      await listRepo.create({
+        name: TEST_LIST_NAME,
+        userId: testUser.id,
+        isDefault: true,
+      });
+
+      const found = await listRepo.findDefaultByUserId(testUser.id);
+      expect(found).toBeDefined();
+      expect(found?.isDefault).toBe(true);
+      expect(found?.user.id).toBe(testUser.id);
+    });
+
+    test('returns null when user has no default list', async () => {
+      await listRepo.create({
+        name: TEST_LIST_NAME,
+        userId: testUser.id,
+        isDefault: false,
+      });
+
+      const found = await listRepo.findDefaultByUserId(testUser.id);
+      expect(found).toBeNull();
+    });
+
+    test('returns only default list when multiple lists exist', async () => {
+      await listRepo.create({
+        name: 'Regular List',
+        userId: testUser.id,
+        isDefault: false,
+      });
+
+      await listRepo.create({
+        name: 'Default List',
+        userId: testUser.id,
+        isDefault: true,
+      });
+
+      const found = await listRepo.findDefaultByUserId(testUser.id);
+      expect(found).toBeDefined();
+      expect(found?.name).toBe('Default List');
+      expect(found?.isDefault).toBe(true);
+    });
+
+    test('returns list with items relation', async () => {
+      await listRepo.create({
+        name: TEST_LIST_NAME,
+        userId: testUser.id,
+        isDefault: true,
+      });
+
+      const found = await listRepo.findDefaultByUserId(testUser.id);
+      expect(found?.items).toBeDefined();
+      expect(Array.isArray(found?.items)).toBe(true);
+    });
+
+    test('returns null for non-existent user', async () => {
+      const found = await listRepo.findDefaultByUserId('550e8400-e29b-41d4-a716-446655440000');
+      expect(found).toBeNull();
+    });
+  });
+
   describe('update', () => {
     test('updates list name', async () => {
       const created = await listRepo.create({
@@ -356,45 +419,61 @@ describe('ListRepository', () => {
   describe('validation', () => {
     describe('create validation', () => {
       test('rejects list with empty name', async () => {
-        await expect(
-          listRepo.create({
+        try {
+          await listRepo.create({
             name: '',
             userId: testUser.id,
-          }),
-        ).rejects.toThrow('Validation failed');
+          });
+          throw new Error('Expected validation error');
+        } catch (error) {
+          expect(error).toBeInstanceOf(EntityValidationError);
+          expect((error as Error).message).toContain('Validation failed');
+        }
       });
 
       test('rejects list with name too long', async () => {
-        await expect(
-          listRepo.create({
+        try {
+          await listRepo.create({
             name: 'a'.repeat(256),
             userId: testUser.id,
-          }),
-        ).rejects.toThrow('Validation failed');
+          });
+          throw new Error('Expected validation error');
+        } catch (error) {
+          expect(error).toBeInstanceOf(EntityValidationError);
+          expect((error as Error).message).toContain('Validation failed');
+        }
       });
 
       test('rejects list with invalid name types', async () => {
         const invalidNames = [123, {}, [], true];
         for (const name of invalidNames) {
-          await expect(
-            listRepo.create({
+          try {
+            await listRepo.create({
               name: name as any,
               userId: testUser.id,
-            }),
-          ).rejects.toThrow('Validation failed');
+            });
+            throw new Error('Expected validation error');
+          } catch (error) {
+            expect(error).toBeInstanceOf(EntityValidationError);
+            expect((error as Error).message).toContain('Validation failed');
+          }
         }
       });
 
       test('rejects list with invalid isDefault types', async () => {
         const invalidDefaults = ['true', 'yes', 1, 0, {}, []];
         for (const isDefault of invalidDefaults) {
-          await expect(
-            listRepo.create({
+          try {
+            await listRepo.create({
               name: TEST_LIST_NAME,
               userId: testUser.id,
               isDefault: isDefault as any,
-            }),
-          ).rejects.toThrow('Validation failed');
+            });
+            throw new Error('Expected validation error');
+          } catch (error) {
+            expect(error).toBeInstanceOf(EntityValidationError);
+            expect((error as Error).message).toContain('Validation failed');
+          }
         }
       });
 
@@ -417,7 +496,13 @@ describe('ListRepository', () => {
           userId: testUser.id,
         });
 
-        await expect(listRepo.update(created.id, {name: ''})).rejects.toThrow('Validation failed');
+        try {
+          await listRepo.update(created.id, {name: ''});
+          throw new Error('Expected validation error');
+        } catch (error) {
+          expect(error).toBeInstanceOf(EntityValidationError);
+          expect((error as Error).message).toContain('Validation failed');
+        }
       });
 
       test('rejects update with name too long', async () => {
@@ -426,9 +511,13 @@ describe('ListRepository', () => {
           userId: testUser.id,
         });
 
-        await expect(listRepo.update(created.id, {name: 'a'.repeat(256)})).rejects.toThrow(
-          'Validation failed',
-        );
+        try {
+          await listRepo.update(created.id, {name: 'a'.repeat(256)});
+          throw new Error('Expected validation error');
+        } catch (error) {
+          expect(error).toBeInstanceOf(EntityValidationError);
+          expect((error as Error).message).toContain('Validation failed');
+        }
       });
 
       test('rejects update with invalid isDefault types', async () => {
@@ -439,9 +528,13 @@ describe('ListRepository', () => {
 
         const invalidDefaults = ['true', 'yes', 1, 0, {}];
         for (const isDefault of invalidDefaults) {
-          await expect(listRepo.update(created.id, {isDefault: isDefault as any})).rejects.toThrow(
-            'Validation failed',
-          );
+          try {
+            await listRepo.update(created.id, {isDefault: isDefault as any});
+            throw new Error('Expected validation error');
+          } catch (error) {
+            expect(error).toBeInstanceOf(EntityValidationError);
+            expect((error as Error).message).toContain('Validation failed');
+          }
         }
       });
     });

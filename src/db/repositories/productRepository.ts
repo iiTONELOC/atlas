@@ -1,5 +1,5 @@
 import {Repository} from 'typeorm';
-import {validate} from 'class-validator';
+import {validateEntity} from './validation';
 import {Product, Source} from '../entities';
 import {populateBaseEntityFields} from '../entities/helpers';
 
@@ -24,17 +24,8 @@ export class ProductRepository {
       barcode,
       source: {id: sourceId},
     });
-    populateBaseEntityFields(product);
 
-    const errors = await validate(product);
-    if (errors.length > 0) {
-      throw new Error(
-        `Validation failed: ${errors
-          .map(e => Object.values(e.constraints || {}))
-          .flat()
-          .join(', ')}`,
-      );
-    }
+    await validateEntity(populateBaseEntityFields(product));
 
     return this.repo.save(product);
   }
@@ -45,6 +36,10 @@ export class ProductRepository {
 
   findByBarcode(barcode: string) {
     return this.repo.findOne({where: {barcode}, relations: ['source']});
+  }
+
+  findBySourceId(sourceId: string) {
+    return this.repo.find({where: {source: {id: sourceId}}, relations: ['source']});
   }
 
   async update(id: string, {name, barcode, sourceId}: UpdateProductRepoProps) {
@@ -63,15 +58,7 @@ export class ProductRepository {
       product.barcode = barcode;
     }
 
-    const errors = await validate(product);
-    if (errors.length > 0) {
-      throw new Error(
-        `Validation failed: ${errors
-          .map(e => Object.values(e.constraints || {}))
-          .flat()
-          .join(', ')}`,
-      );
-    }
+    await validateEntity(product);
 
     return this.repo.save(product);
   }

@@ -7,6 +7,7 @@ import {
 } from '../../../src/db/repositories/userProductRepository';
 import {getUserRepository} from '../../../src/db/repositories/userRepository';
 import {ProductRepository} from '../../../src/db/repositories/productRepository';
+import {EntityValidationError} from '../../../src/db/repositories/errors';
 import {createTestDataSource, cleanupTestDataSource} from '../../setup';
 
 const TEST_USER_EMAIL = 'test@test.com';
@@ -243,6 +244,116 @@ describe('UserProductRepository', () => {
     });
   });
 
+  describe('findById', () => {
+    test('finds user product by id', async () => {
+      const created = await userProductRepo.create({
+        userId: testUser.id,
+        productId: testProduct.id,
+      });
+
+      const found = await userProductRepo.findById(created.id);
+      expect(found).toBeDefined();
+      expect(found?.id).toBe(created.id);
+    });
+
+    test('finds user product with user relation', async () => {
+      const created = await userProductRepo.create({
+        userId: testUser.id,
+        productId: testProduct.id,
+      });
+
+      const found = await userProductRepo.findById(created.id);
+      expect(found?.user).toBeDefined();
+      expect(found?.user.id).toBe(testUser.id);
+    });
+
+    test('finds user product with productData relation', async () => {
+      const created = await userProductRepo.create({
+        userId: testUser.id,
+        productId: testProduct.id,
+      });
+
+      const found = await userProductRepo.findById(created.id);
+      expect(found?.productData).toBeDefined();
+      expect(found?.productData.id).toBe(testProduct.id);
+    });
+
+    test('returns null for non-existent id', async () => {
+      const found = await userProductRepo.findById('550e8400-e29b-41d4-a716-446655440000');
+      expect(found).toBeNull();
+    });
+
+    test('returns null for invalid uuid format', async () => {
+      const found = await userProductRepo.findById('not-a-uuid');
+      expect(found).toBeNull();
+    });
+  });
+
+  describe('update', () => {
+    test('updates user product productAlias', async () => {
+      const created = await userProductRepo.create({
+        userId: testUser.id,
+        productId: testProduct.id,
+        productAlias: 'Old Alias',
+      });
+
+      const updated = await userProductRepo.update(created.id, {
+        productAlias: 'New Alias',
+      });
+
+      expect(updated.productAlias).toBe('New Alias');
+    });
+
+    test('updates productAlias to null', async () => {
+      const created = await userProductRepo.create({
+        userId: testUser.id,
+        productId: testProduct.id,
+        productAlias: 'Old Alias',
+      });
+
+      const updated = await userProductRepo.update(created.id, {
+        productAlias: null,
+      });
+
+      expect(updated.productAlias).toBeNull();
+    });
+
+    test('updates productAlias from null to value', async () => {
+      const created = await userProductRepo.create({
+        userId: testUser.id,
+        productId: testProduct.id,
+      });
+
+      const updated = await userProductRepo.update(created.id, {
+        productAlias: 'New Alias',
+      });
+
+      expect(updated.productAlias).toBe('New Alias');
+    });
+
+    test('throws error when updating non-existent user product', async () => {
+      await expect(
+        userProductRepo.update('550e8400-e29b-41d4-a716-446655440000', {
+          productAlias: 'Test',
+        }),
+      ).rejects.toThrow('UserProduct not found');
+    });
+
+    test('returns updated user product with relations', async () => {
+      const created = await userProductRepo.create({
+        userId: testUser.id,
+        productId: testProduct.id,
+      });
+
+      const updated = await userProductRepo.update(created.id, {
+        productAlias: 'New Alias',
+      });
+
+      expect(updated.user).toBeDefined();
+      expect(updated.productData).toBeDefined();
+    });
+  });
+
   describe('delete', () => {
     test('deletes user product', async () => {
       const created = await userProductRepo.create({
@@ -303,13 +414,17 @@ describe('UserProductRepository', () => {
       test('rejects user product with invalid productAlias types', async () => {
         const invalidAliases = [123, {}, [], true];
         for (const productAlias of invalidAliases) {
-          await expect(
-            userProductRepo.create({
+          try {
+            await userProductRepo.create({
               userId: testUser.id,
               productId: testProduct.id,
               productAlias: productAlias as any,
-            }),
-          ).rejects.toThrow('Validation failed');
+            });
+            throw new Error('Expected validation error');
+          } catch (error) {
+            expect(error).toBeInstanceOf(EntityValidationError);
+            expect((error as Error).message).toContain('Validation failed');
+          }
         }
       });
 
@@ -332,6 +447,50 @@ describe('UserProductRepository', () => {
           productId: testProduct.id,
         });
         expect(userProduct.productAlias).toBeNull();
+      });
+    });
+
+    describe('update validation', () => {
+      test('rejects update with invalid productAlias types', async () => {
+        const created = await userProductRepo.create({
+          userId: testUser.id,
+          productId: testProduct.id,
+        });
+
+        const invalidAliases = [123, {}, [], true];
+        for (const productAlias of invalidAliases) {
+          try {
+            await userProductRepo.update(created.id, {productAlias: productAlias as any});
+            throw new Error('Expected validation error');
+          } catch (error) {
+            expect(error).toBeInstanceOf(EntityValidationError);
+            expect((error as Error).message).toContain('Validation failed');
+          }
+        }
+      });
+
+      test('accepts valid productAlias updates', async () => {
+        const created = await userProductRepo.create({
+          userId: testUser.id,
+          productId: testProduct.id,
+        });
+
+        const validAliases = ['Updated Product', 'New Alias', 'Product 456'];
+        for (const alias of validAliases) {
+          const updated = await userProductRepo.update(created.id, {productAlias: alias});
+          expect(updated.productAlias).toBe(alias);
+        }
+      });
+
+      test('accepts null productAlias update', async () => {
+        const created = await userProductRepo.create({
+          userId: testUser.id,
+          productId: testProduct.id,
+          productAlias: 'Old Alias',
+        });
+
+        const updated = await userProductRepo.update(created.id, {productAlias: null});
+        expect(updated.productAlias).toBeNull();
       });
     });
   });

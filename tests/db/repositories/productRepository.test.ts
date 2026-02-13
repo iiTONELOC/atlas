@@ -3,6 +3,7 @@ import {DataSource} from 'typeorm';
 import {Product, Source, SourceName} from '../../../src/db/entities';
 import {ProductRepository} from '../../../src/db/repositories/productRepository';
 import {getSourceRepository} from '../../../src/db/repositories/sourceRepository';
+import {EntityValidationError} from '../../../src/db/repositories/errors';
 import {createTestDataSource, cleanupTestDataSource} from '../../setup';
 
 const TEST_PRODUCT_NAME = 'Test Product';
@@ -159,6 +160,90 @@ describe('ProductRepository', () => {
     });
   });
 
+  describe('findBySourceId', () => {
+    test('finds products by source id', async () => {
+      await productRepo.create({
+        name: TEST_PRODUCT_NAME,
+        barcode: TEST_BARCODE,
+        sourceId: testSource.id,
+      });
+
+      const found = await productRepo.findBySourceId(testSource.id);
+      expect(found).toBeDefined();
+      expect(Array.isArray(found)).toBe(true);
+      expect(found.length).toBe(1);
+    });
+
+    test('finds multiple products from same source', async () => {
+      await productRepo.create({
+        name: 'Product 1',
+        barcode: '1234567890123',
+        sourceId: testSource.id,
+      });
+
+      await productRepo.create({
+        name: 'Product 2',
+        barcode: '9876543210987',
+        sourceId: testSource.id,
+      });
+
+      const found = await productRepo.findBySourceId(testSource.id);
+      expect(found.length).toBe(2);
+    });
+
+    test('returns empty array for source with no products', async () => {
+      const source2 = await sourceRepo.create({
+        name: SourceName.UPC_ITEM_DB,
+        url: 'https://example.com/upc',
+      });
+
+      const found = await productRepo.findBySourceId(source2.id);
+      expect(Array.isArray(found)).toBe(true);
+      expect(found.length).toBe(0);
+    });
+
+    test('returns products with source relation', async () => {
+      await productRepo.create({
+        name: TEST_PRODUCT_NAME,
+        barcode: TEST_BARCODE,
+        sourceId: testSource.id,
+      });
+
+      const found = await productRepo.findBySourceId(testSource.id);
+      expect(found[0].source).toBeDefined();
+      expect(found[0].source?.id).toBe(testSource.id);
+    });
+
+    test('returns only products for specified source', async () => {
+      const source2 = await sourceRepo.create({
+        name: SourceName.UPC_ITEM_DB,
+        url: 'https://example.com/upc',
+      });
+
+      await productRepo.create({
+        name: 'Product 1',
+        barcode: '1234567890123',
+        sourceId: testSource.id,
+      });
+
+      await productRepo.create({
+        name: 'Product 2',
+        barcode: '9876543210987',
+        sourceId: source2.id,
+      });
+
+      const found = await productRepo.findBySourceId(testSource.id);
+      expect(found.length).toBe(1);
+      expect(found[0].source?.id).toBe(testSource.id);
+    });
+
+    test('returns empty array for non-existent source', async () => {
+      const found = await productRepo.findBySourceId('550e8400-e29b-41d4-a716-446655440000');
+      expect(Array.isArray(found)).toBe(true);
+      expect(found.length).toBe(0);
+    });
+  });
+
   describe('update', () => {
     test('updates product name', async () => {
       const created = await productRepo.create({
@@ -269,8 +354,6 @@ describe('ProductRepository', () => {
         sourceId: testSource.id,
       });
 
-      const originalUpdatedAt = created.updatedAt;
-
       await new Promise(resolve => setTimeout(resolve, 100));
 
       const updated = await productRepo.update(created.id, {
@@ -332,38 +415,50 @@ describe('ProductRepository', () => {
   describe('validation', () => {
     describe('create validation', () => {
       test('rejects product with name too short', async () => {
-        await expect(
-          productRepo.create({
+        try {
+          await productRepo.create({
             name: 'ab',
             barcode: TEST_BARCODE,
             sourceId: testSource.id,
-          }),
-        ).rejects.toThrow('Validation failed');
+          });
+          throw new Error('Expected validation error');
+        } catch (error) {
+          expect(error).toBeInstanceOf(EntityValidationError);
+          expect((error as Error).message).toContain('Validation failed');
+        }
       });
 
       test('rejects product with invalid name types', async () => {
         const invalidNames = [null, undefined, 123, {}, [], true];
         for (const name of invalidNames) {
-          await expect(
-            productRepo.create({
+          try {
+            await productRepo.create({
               name: name as any,
               barcode: TEST_BARCODE,
               sourceId: testSource.id,
-            }),
-          ).rejects.toThrow('Validation failed');
+            });
+            throw new Error('Expected validation error');
+          } catch (error) {
+            expect(error).toBeInstanceOf(EntityValidationError);
+            expect((error as Error).message).toContain('Validation failed');
+          }
         }
       });
 
       test('rejects product with invalid barcode types', async () => {
         const invalidBarcodes = [null, undefined, 123, {}, [], true];
         for (const barcode of invalidBarcodes) {
-          await expect(
-            productRepo.create({
+          try {
+            await productRepo.create({
               name: TEST_PRODUCT_NAME,
               barcode: barcode as any,
               sourceId: testSource.id,
-            }),
-          ).rejects.toThrow('Validation failed');
+            });
+            throw new Error('Expected validation error');
+          } catch (error) {
+            expect(error).toBeInstanceOf(EntityValidationError);
+            expect((error as Error).message).toContain('Validation failed');
+          }
         }
       });
 
@@ -388,9 +483,13 @@ describe('ProductRepository', () => {
           sourceId: testSource.id,
         });
 
-        await expect(productRepo.update(created.id, {name: 'ab'})).rejects.toThrow(
-          'Validation failed',
-        );
+        try {
+          await productRepo.update(created.id, {name: 'ab'});
+          throw new Error('Expected validation error');
+        } catch (error) {
+          expect(error).toBeInstanceOf(EntityValidationError);
+          expect((error as Error).message).toContain('Validation failed');
+        }
       });
 
       test('rejects update with invalid name types', async () => {
@@ -402,9 +501,13 @@ describe('ProductRepository', () => {
 
         const invalidNames = [null, 123, {}, [], true];
         for (const name of invalidNames) {
-          await expect(productRepo.update(created.id, {name: name as any})).rejects.toThrow(
-            'Validation failed',
-          );
+          try {
+            await productRepo.update(created.id, {name: name as any});
+            throw new Error('Expected validation error');
+          } catch (error) {
+            expect(error).toBeInstanceOf(EntityValidationError);
+            expect((error as Error).message).toContain('Validation failed');
+          }
         }
       });
 
@@ -417,9 +520,13 @@ describe('ProductRepository', () => {
 
         const invalidBarcodes = [null, 123, {}, [], true];
         for (const barcode of invalidBarcodes) {
-          await expect(productRepo.update(created.id, {barcode: barcode as any})).rejects.toThrow(
-            'Validation failed',
-          );
+          try {
+            await productRepo.update(created.id, {barcode: barcode as any});
+            throw new Error('Expected validation error');
+          } catch (error) {
+            expect(error).toBeInstanceOf(EntityValidationError);
+            expect((error as Error).message).toContain('Validation failed');
+          }
         }
       });
     });

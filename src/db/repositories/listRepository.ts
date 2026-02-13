@@ -1,6 +1,6 @@
 import {Repository} from 'typeorm';
-import {validate} from 'class-validator';
 import {List} from '../entities';
+import {validateEntity} from './validation';
 import {populateBaseEntityFields} from '../entities/helpers';
 
 export type CreateListRepoProps = {
@@ -23,17 +23,8 @@ export class ListRepository {
       isDefault,
       user: {id: userId},
     });
-    populateBaseEntityFields(list);
 
-    const errors = await validate(list);
-    if (errors.length > 0) {
-      throw new Error(
-        `Validation failed: ${errors
-          .map(e => Object.values(e.constraints || {}))
-          .flat()
-          .join(', ')}`,
-      );
-    }
+    await validateEntity(populateBaseEntityFields(list));
 
     return this.repo.save(list);
   }
@@ -44,6 +35,13 @@ export class ListRepository {
 
   findByUserId(userId: string) {
     return this.repo.find({where: {user: {id: userId}}, relations: ['items']});
+  }
+
+  findDefaultByUserId(userId: string) {
+    return this.repo.findOne({
+      where: {user: {id: userId}, isDefault: true},
+      relations: ['user', 'items'],
+    });
   }
 
   async update(id: string, {name, isDefault}: UpdateListRepoProps) {
@@ -59,16 +57,7 @@ export class ListRepository {
       list.isDefault = isDefault;
     }
 
-    const errors = await validate(list);
-    if (errors.length > 0) {
-      throw new Error(
-        `Validation failed: ${errors
-          .map(e => Object.values(e.constraints || {}))
-          .flat()
-          .join(', ')}`,
-      );
-    }
-
+    await validateEntity(list);
     return this.repo.save(list);
   }
 

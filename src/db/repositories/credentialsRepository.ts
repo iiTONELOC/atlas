@@ -1,6 +1,6 @@
 import {Repository} from 'typeorm';
-import {validate} from 'class-validator';
 import {Credentials} from '../entities';
+import {validateEntity} from './validation';
 import {populateBaseEntityFields} from '../entities/helpers';
 
 export type CreateCredentialsRepoProps = {
@@ -13,23 +13,10 @@ export class CredentialsRepository {
 
   async create({email, password}: CreateCredentialsRepoProps) {
     const credentials = this.repo.create({email, password});
-    populateBaseEntityFields(credentials);
 
-    const errors = await validate(credentials);
-    if (errors.length > 0) {
-      throw new Error(
-        `Validation failed: ${errors
-          .map(e => Object.values(e.constraints || {}))
-          .flat()
-          .join(', ')}`,
-      );
-    }
+    await validateEntity(populateBaseEntityFields(credentials));
 
     return this.repo.save(credentials);
-  }
-
-  findByEmail(email: string) {
-    return this.repo.findOne({where: {email}});
   }
 
   async update(id: string, {email, password}: Partial<CreateCredentialsRepoProps>) {
@@ -45,17 +32,16 @@ export class CredentialsRepository {
       credentials.password = password;
     }
 
-    const errors = await validate(credentials);
-    if (errors.length > 0) {
-      throw new Error(
-        `Validation failed: ${errors
-          .map(e => Object.values(e.constraints || {}))
-          .flat()
-          .join(', ')}`,
-      );
-    }
-
+    await validateEntity(credentials);
     return this.repo.save(credentials);
+  }
+
+  async findByEmail(email: string) {
+    return this.repo.findOne({where: {email}});
+  }
+
+  async findById(id: string) {
+    return this.repo.findOne({where: {id}});
   }
 
   async delete(id: string) {

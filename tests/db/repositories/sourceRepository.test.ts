@@ -2,6 +2,7 @@ import {describe, test, expect, beforeAll, afterAll, beforeEach} from 'bun:test'
 import {DataSource} from 'typeorm';
 import {Source, SourceName} from '../../../src/db/entities';
 import {getSourceRepository, SourceRepository} from '../../../src/db/repositories/sourceRepository';
+import {EntityValidationError} from '../../../src/db/repositories/errors';
 import {createTestDataSource, cleanupTestDataSource} from '../../setup';
 
 const TEST_SOURCE_NAME = SourceName.BARCODE_INDEX;
@@ -247,24 +248,32 @@ describe('SourceRepository', () => {
       test('rejects source with invalid url format', async () => {
         const invalidUrls = ['not-a-url', 'htp://bad', 'ftp only', 'no-protocol.com'];
         for (const url of invalidUrls) {
-          await expect(
-            sourceRepo.create({
+          try {
+            await sourceRepo.create({
               name: TEST_SOURCE_NAME,
               url,
-            }),
-          ).rejects.toThrow('Validation failed');
+            });
+            throw new Error('Expected validation error');
+          } catch (error) {
+            expect(error).toBeInstanceOf(EntityValidationError);
+            expect((error as Error).message).toContain('Validation failed');
+          }
         }
       });
 
       test('rejects source with invalid url types', async () => {
         const invalidUrls = [null, undefined, 123, {}, [], true];
         for (const url of invalidUrls) {
-          await expect(
-            sourceRepo.create({
+          try {
+            await sourceRepo.create({
               name: TEST_SOURCE_NAME,
               url: url as any,
-            }),
-          ).rejects.toThrow('Validation failed');
+            });
+            throw new Error('Expected validation error');
+          } catch (error) {
+            expect(error).toBeInstanceOf(EntityValidationError);
+            expect((error as Error).message).toContain('Validation failed');
+          }
         }
       });
 
@@ -293,7 +302,13 @@ describe('SourceRepository', () => {
 
         const invalidUrls = ['not-a-url', 'htp://bad'];
         for (const url of invalidUrls) {
-          await expect(sourceRepo.update(created.id, {url})).rejects.toThrow('Validation failed');
+          try {
+            await sourceRepo.update(created.id, {url});
+            throw new Error('Expected validation error');
+          } catch (error) {
+            expect(error).toBeInstanceOf(EntityValidationError);
+            expect((error as Error).message).toContain('Validation failed');
+          }
         }
       });
 
@@ -305,9 +320,13 @@ describe('SourceRepository', () => {
 
         const invalidUrls = [null, 123, {}, []];
         for (const url of invalidUrls) {
-          await expect(sourceRepo.update(created.id, {url: url as any})).rejects.toThrow(
-            'Validation failed',
-          );
+          try {
+            await sourceRepo.update(created.id, {url: url as any});
+            throw new Error('Expected validation error');
+          } catch (error) {
+            expect(error).toBeInstanceOf(EntityValidationError);
+            expect((error as Error).message).toContain('Validation failed');
+          }
         }
       });
     });

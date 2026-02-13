@@ -1,6 +1,6 @@
 import {Repository} from 'typeorm';
-import {validate} from 'class-validator';
 import {ListItem} from '../entities';
+import {validateEntity} from './validation';
 import {populateBaseEntityFields} from '../entities/helpers';
 
 export type CreateListItemRepoProps = {
@@ -35,23 +35,21 @@ export class ListItemRepository {
       notes,
       isComplete,
     });
-    populateBaseEntityFields(listItem);
 
-    const errors = await validate(listItem);
-    if (errors.length > 0) {
-      throw new Error(
-        `Validation failed: ${errors
-          .map(e => Object.values(e.constraints || {}))
-          .flat()
-          .join(', ')}`,
-      );
-    }
-
+    await validateEntity(populateBaseEntityFields(listItem));
     return this.repo.save(listItem);
   }
 
   findById(id: string) {
     return this.repo.findOne({where: {id}, relations: ['product', 'list']});
+  }
+
+  findByListId(listId: string) {
+    return this.repo.find({where: {list: {id: listId}}, relations: ['product', 'list']});
+  }
+
+  findByUserProductId(userProductId: string) {
+    return this.repo.find({where: {product: {id: userProductId}}, relations: ['product', 'list']});
   }
 
   async update(id: string, {notes, listId, quantity, isComplete}: UpdateListItemRepoProps) {
@@ -73,16 +71,7 @@ export class ListItemRepository {
       listItem.isComplete = isComplete;
     }
 
-    const errors = await validate(listItem);
-    if (errors.length > 0) {
-      throw new Error(
-        `Validation failed: ${errors
-          .map(e => Object.values(e.constraints || {}))
-          .flat()
-          .join(', ')}`,
-      );
-    }
-
+    await validateEntity(listItem);
     return this.repo.save(listItem);
   }
 

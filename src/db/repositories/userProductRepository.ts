@@ -1,6 +1,6 @@
 import {Repository} from 'typeorm';
-import {validate} from 'class-validator';
 import {UserProduct} from '../entities';
+import {validateEntity} from './validation';
 import {populateBaseEntityFields} from '../entities/helpers';
 
 export type CreateUserProductRepoProps = {
@@ -18,23 +18,31 @@ export class UserProductRepository {
       productData: {id: productId},
       productAlias,
     });
-    populateBaseEntityFields(userProduct);
 
-    const errors = await validate(userProduct);
-    if (errors.length > 0) {
-      throw new Error(
-        `Validation failed: ${errors
-          .map(e => Object.values(e.constraints || {}))
-          .flat()
-          .join(', ')}`,
-      );
-    }
-
+    await validateEntity(populateBaseEntityFields(userProduct));
     return this.repo.save(userProduct);
   }
 
-  findByUserId(userId: string) {
+  async findByUserId(userId: string) {
     return this.repo.find({where: {user: {id: userId}}, relations: ['productData']});
+  }
+
+  async findById(id: string) {
+    return this.repo.findOne({where: {id}, relations: ['user', 'productData']});
+  }
+
+  async update(id: string, {productAlias}: {productAlias?: string | null}) {
+    const userProduct = await this.repo.findOne({where: {id}, relations: ['user', 'productData']});
+    if (!userProduct) {
+      throw new Error('UserProduct not found');
+    }
+
+    if (productAlias !== undefined) {
+      userProduct.productAlias = productAlias;
+    }
+
+    await validateEntity(userProduct);
+    return this.repo.save(userProduct);
   }
 
   async delete(id: string) {
