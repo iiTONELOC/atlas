@@ -12,13 +12,13 @@ export type CreateTokenRepoProps = {
 export class TokenRepository {
   constructor(private readonly repo: Repository<Token>) {}
 
-  create(data: CreateTokenRepoProps) {
+  create({sessionId, jti, tokenHash, type, expiresAt}: CreateTokenRepoProps) {
     const token = this.repo.create({
-      session: {id: data.sessionId} as any, // TypeORM will handle this relation
-      jti: data.jti,
-      tokenHash: data.tokenHash,
-      type: data.type,
-      expiresAt: data.expiresAt,
+      session: {id: sessionId},
+      jti,
+      tokenHash,
+      type,
+      expiresAt,
     });
     return this.repo.save(token);
   }

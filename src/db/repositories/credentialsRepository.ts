@@ -9,21 +9,27 @@ export type CreateCredentialsRepoProps = {
 export class CredentialsRepository {
   constructor(private readonly repo: Repository<Credentials>) {}
 
-  create(data: CreateCredentialsRepoProps) {
-    return this.repo.save(this.repo.create(data));
+  create({email, password}: CreateCredentialsRepoProps) {
+    return this.repo.save(this.repo.create({email, password}));
   }
 
   findByEmail(email: string) {
     return this.repo.findOne({where: {email}});
   }
 
-  async update(id: string, data: Partial<CreateCredentialsRepoProps>) {
+  async update(id: string, {email, password}: Partial<CreateCredentialsRepoProps>) {
     const credentials = await this.repo.findOne({where: {id}});
     if (!credentials) {
       throw new Error('Credentials not found');
     }
 
-    Object.assign(credentials, data);
+    if (email !== undefined) {
+      credentials.email = email;
+    }
+    if (password !== undefined) {
+      credentials.password = password;
+    }
+
     return this.repo.save(credentials);
   }
 

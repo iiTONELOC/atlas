@@ -17,12 +17,12 @@ export type UpdateSessionRepoProps = {
 export class SessionRepository {
   constructor(private readonly repo: Repository<Session>) {}
 
-  create(data: CreateSessionRepoProps) {
+  create({userId, expiresAt, userAgent, ipAddress}: CreateSessionRepoProps) {
     const session = this.repo.create({
-      user: {id: data.userId} as any, // TypeORM will handle this relation
-      expiresAt: data.expiresAt,
-      userAgent: data.userAgent,
-      ipAddress: data.ipAddress,
+      user: {id: userId},
+      expiresAt,
+      userAgent,
+      ipAddress,
     });
     return this.repo.save(session);
   }
@@ -32,16 +32,28 @@ export class SessionRepository {
   }
 
   async update(id: string, data: UpdateSessionRepoProps) {
+    // Defensive check: prevent changing userId
+    if ('userId' in data) {
+      throw new Error('Cannot change user of a session');
+    }
+
+    const {expiresAt, userAgent, ipAddress} = data;
+
     const session = await this.repo.findOne({where: {id}});
     if (!session) {
       throw new Error('Session not found');
     }
 
-    if ((data as any).userId) {
-      throw new Error('Cannot change user of a session');
+    if (expiresAt !== undefined) {
+      session.expiresAt = expiresAt;
+    }
+    if (userAgent !== undefined) {
+      session.userAgent = userAgent;
+    }
+    if (ipAddress !== undefined) {
+      session.ipAddress = ipAddress;
     }
 
-    Object.assign(session, data);
     return this.repo.save(session);
   }
 

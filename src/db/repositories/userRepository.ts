@@ -15,8 +15,8 @@ export type UpdateUserRepoProps = {
 export class UserRepository {
   constructor(private readonly repo: Repository<User>) {}
 
-  create(data: CreateUserRepoProps) {
-    return this.repo.save(this.repo.create(data));
+  create({credentials, displayName}: CreateUserRepoProps) {
+    return this.repo.save(this.repo.create({credentials, displayName}));
   }
 
   findById(id: string) {
@@ -47,13 +47,19 @@ export class UserRepository {
     });
   }
 
-  async update(id: string, data: UpdateUserRepoProps) {
+  async update(id: string, {accountStatus, displayName}: UpdateUserRepoProps) {
     const user = await this.findById(id);
     if (!user) {
       throw new Error('User not found');
     }
 
-    Object.assign(user, data);
+    if (accountStatus !== undefined) {
+      user.accountStatus = accountStatus;
+    }
+    if (displayName !== undefined) {
+      user.displayName = displayName;
+    }
+
     return this.repo.save(user);
   }
 }

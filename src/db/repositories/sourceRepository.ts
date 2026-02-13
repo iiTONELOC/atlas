@@ -9,10 +9,10 @@ export type CreateSourceRepoProps = {
 export class SourceRepository {
   constructor(private readonly repo: Repository<Source>) {}
 
-  create(data: CreateSourceRepoProps) {
+  create({name, url}: CreateSourceRepoProps) {
     const source = this.repo.create({
-      name: data.name,
-      url: data.url,
+      name,
+      url,
     });
     return this.repo.save(source);
   }
@@ -21,12 +21,19 @@ export class SourceRepository {
     return this.repo.findOne({where: {id}});
   }
 
-  async update(id: string, data: Partial<CreateSourceRepoProps>) {
+  async update(id: string, {name, url}: Partial<CreateSourceRepoProps>) {
     const source = await this.repo.findOne({where: {id}});
     if (!source) {
       throw new Error('Source not found');
     }
-    Object.assign(source, data);
+
+    if (name !== undefined) {
+      source.name = name;
+    }
+    if (url !== undefined) {
+      source.url = url;
+    }
+
     return this.repo.save(source);
   }
 
