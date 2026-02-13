@@ -1,4 +1,3 @@
-// tests/db/repositories/productRepository.test.ts
 import {describe, test, expect, beforeAll, afterAll, beforeEach} from 'bun:test';
 import {DataSource} from 'typeorm';
 import {Product, Source, SourceName} from '../../../src/db/entities';
@@ -327,6 +326,102 @@ describe('ProductRepository', () => {
 
       const found = await productRepo.findByBarcode(TEST_BARCODE);
       expect(found).toBeNull();
+    });
+  });
+
+  describe('validation', () => {
+    describe('create validation', () => {
+      test('rejects product with name too short', async () => {
+        await expect(
+          productRepo.create({
+            name: 'ab',
+            barcode: TEST_BARCODE,
+            sourceId: testSource.id,
+          }),
+        ).rejects.toThrow('Validation failed');
+      });
+
+      test('rejects product with invalid name types', async () => {
+        const invalidNames = [null, undefined, 123, {}, [], true];
+        for (const name of invalidNames) {
+          await expect(
+            productRepo.create({
+              name: name as any,
+              barcode: TEST_BARCODE,
+              sourceId: testSource.id,
+            }),
+          ).rejects.toThrow('Validation failed');
+        }
+      });
+
+      test('rejects product with invalid barcode types', async () => {
+        const invalidBarcodes = [null, undefined, 123, {}, [], true];
+        for (const barcode of invalidBarcodes) {
+          await expect(
+            productRepo.create({
+              name: TEST_PRODUCT_NAME,
+              barcode: barcode as any,
+              sourceId: testSource.id,
+            }),
+          ).rejects.toThrow('Validation failed');
+        }
+      });
+
+      test('accepts valid product names', async () => {
+        const validNames = ['abc', 'Valid Product', 'Product With 123', 'Long Product Name Here'];
+        for (const name of validNames) {
+          const product = await productRepo.create({
+            name,
+            barcode: `${Math.floor(Math.random() * 10000000000000)}`,
+            sourceId: testSource.id,
+          });
+          expect(product.name).toBe(name);
+        }
+      });
+    });
+
+    describe('update validation', () => {
+      test('rejects update with name too short', async () => {
+        const created = await productRepo.create({
+          name: TEST_PRODUCT_NAME,
+          barcode: TEST_BARCODE,
+          sourceId: testSource.id,
+        });
+
+        await expect(productRepo.update(created.id, {name: 'ab'})).rejects.toThrow(
+          'Validation failed',
+        );
+      });
+
+      test('rejects update with invalid name types', async () => {
+        const created = await productRepo.create({
+          name: TEST_PRODUCT_NAME,
+          barcode: TEST_BARCODE,
+          sourceId: testSource.id,
+        });
+
+        const invalidNames = [null, 123, {}, [], true];
+        for (const name of invalidNames) {
+          await expect(productRepo.update(created.id, {name: name as any})).rejects.toThrow(
+            'Validation failed',
+          );
+        }
+      });
+
+      test('rejects update with invalid barcode types', async () => {
+        const created = await productRepo.create({
+          name: TEST_PRODUCT_NAME,
+          barcode: TEST_BARCODE,
+          sourceId: testSource.id,
+        });
+
+        const invalidBarcodes = [null, 123, {}, [], true];
+        for (const barcode of invalidBarcodes) {
+          await expect(productRepo.update(created.id, {barcode: barcode as any})).rejects.toThrow(
+            'Validation failed',
+          );
+        }
+      });
     });
   });
 });

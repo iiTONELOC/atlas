@@ -1,5 +1,7 @@
 import {Repository} from 'typeorm';
+import {validate} from 'class-validator';
 import {UserProduct} from '../entities';
+import {populateBaseEntityFields} from '../entities/helpers';
 
 export type CreateUserProductRepoProps = {
   userId: string;
@@ -10,12 +12,24 @@ export type CreateUserProductRepoProps = {
 export class UserProductRepository {
   constructor(private readonly repo: Repository<UserProduct>) {}
 
-  create({userId, productId, productAlias}: CreateUserProductRepoProps) {
+  async create({userId, productId, productAlias}: CreateUserProductRepoProps) {
     const userProduct = this.repo.create({
       user: {id: userId},
       productData: {id: productId},
       productAlias,
     });
+    populateBaseEntityFields(userProduct);
+
+    const errors = await validate(userProduct);
+    if (errors.length > 0) {
+      throw new Error(
+        `Validation failed: ${errors
+          .map(e => Object.values(e.constraints || {}))
+          .flat()
+          .join(', ')}`,
+      );
+    }
+
     return this.repo.save(userProduct);
   }
 

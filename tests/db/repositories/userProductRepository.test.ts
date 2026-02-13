@@ -1,4 +1,3 @@
-// tests/db/repositories/userProductRepository.test.ts
 import {describe, test, expect, beforeAll, afterAll, beforeEach} from 'bun:test';
 import {DataSource} from 'typeorm';
 import {UserProduct, User, Product} from '../../../src/db/entities';
@@ -296,6 +295,44 @@ describe('UserProductRepository', () => {
       const found = await userProductRepo.findByUserId(testUser.id);
       expect(found.length).toBe(1);
       expect(found[0].productData.id).toBe(product2.id);
+    });
+  });
+
+  describe('validation', () => {
+    describe('create validation', () => {
+      test('rejects user product with invalid productAlias types', async () => {
+        const invalidAliases = [123, {}, [], true];
+        for (const productAlias of invalidAliases) {
+          await expect(
+            userProductRepo.create({
+              userId: testUser.id,
+              productId: testProduct.id,
+              productAlias: productAlias as any,
+            }),
+          ).rejects.toThrow('Validation failed');
+        }
+      });
+
+      test('accepts valid productAlias values', async () => {
+        const validAliases = ['My Product', 'Favorite Item', 'Product 123'];
+        for (const alias of validAliases) {
+          const userProduct = await userProductRepo.create({
+            userId: testUser.id,
+            productId: testProduct.id,
+            productAlias: alias,
+          });
+          expect(userProduct.productAlias).toBe(alias);
+          await userProductRepo.delete(userProduct.id);
+        }
+      });
+
+      test('accepts null productAlias', async () => {
+        const userProduct = await userProductRepo.create({
+          userId: testUser.id,
+          productId: testProduct.id,
+        });
+        expect(userProduct.productAlias).toBeNull();
+      });
     });
   });
 });

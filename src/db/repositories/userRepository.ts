@@ -1,5 +1,7 @@
 import {Repository} from 'typeorm';
+import {validate} from 'class-validator';
 import {User} from '../entities';
+import {populateBaseEntityFields} from '../entities/helpers';
 import type {CreateCredentialsRepoProps} from './credentialsRepository';
 
 export type CreateUserRepoProps = {
@@ -15,8 +17,21 @@ export type UpdateUserRepoProps = {
 export class UserRepository {
   constructor(private readonly repo: Repository<User>) {}
 
-  create({credentials, displayName}: CreateUserRepoProps) {
-    return this.repo.save(this.repo.create({credentials, displayName}));
+  async create({credentials, displayName}: CreateUserRepoProps) {
+    const user = this.repo.create({credentials, displayName});
+    populateBaseEntityFields(user);
+
+    const errors = await validate(user);
+    if (errors.length > 0) {
+      throw new Error(
+        `Validation failed: ${errors
+          .map(e => Object.values(e.constraints || {}))
+          .flat()
+          .join(', ')}`,
+      );
+    }
+
+    return this.repo.save(user);
   }
 
   findById(id: string) {
@@ -58,6 +73,16 @@ export class UserRepository {
     }
     if (displayName !== undefined) {
       user.displayName = displayName;
+    }
+
+    const errors = await validate(user);
+    if (errors.length > 0) {
+      throw new Error(
+        `Validation failed: ${errors
+          .map(e => Object.values(e.constraints || {}))
+          .flat()
+          .join(', ')}`,
+      );
     }
 
     return this.repo.save(user);

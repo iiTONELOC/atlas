@@ -269,4 +269,75 @@ describe('CredentialsRepository', () => {
       );
     });
   });
+
+  describe('validation', () => {
+    describe('create validation', () => {
+      test('rejects credentials with invalid email', async () => {
+        const invalidEmails = ['bad-email', 'no-at-sign', '@nodomain', 'spaces in@email.com'];
+        for (const email of invalidEmails) {
+          await expect(
+            credentialsRepo.create({
+              email,
+              password: TEST_PASSWORD,
+            }),
+          ).rejects.toThrow();
+        }
+      });
+
+      test('rejects credentials with invalid email types', async () => {
+        const invalidEmails = [null, undefined, 123, {}, [], true];
+        for (const email of invalidEmails) {
+          await expect(
+            credentialsRepo.create({
+              email: email as any,
+              password: TEST_PASSWORD,
+            }),
+          ).rejects.toThrow();
+        }
+      });
+
+      test('accepts valid email formats', async () => {
+        const validEmails = [
+          'user@example.com',
+          'test+tag@domain.co.uk',
+          'name.surname@company.com',
+        ];
+        for (const email of validEmails) {
+          const creds = await credentialsRepo.create({
+            email,
+            password: TEST_PASSWORD,
+          });
+          expect(creds.email).toBe(email);
+        }
+      });
+    });
+
+    describe('update validation', () => {
+      test('rejects update with invalid email', async () => {
+        const created = await credentialsRepo.create({
+          email: TEST_EMAIL,
+          password: TEST_PASSWORD,
+        });
+
+        const invalidEmails = ['bad-email', 'no-at-sign', '@nodomain'];
+        for (const email of invalidEmails) {
+          await expect(credentialsRepo.update(created.id, {email})).rejects.toThrow();
+        }
+      });
+
+      test('rejects update with invalid email types', async () => {
+        const created = await credentialsRepo.create({
+          email: TEST_EMAIL,
+          password: TEST_PASSWORD,
+        });
+
+        const invalidEmails = [null, 123, {}, []];
+        for (const email of invalidEmails) {
+          await expect(credentialsRepo.update(created.id, {email: email as any})).rejects.toThrow(
+            'Validation failed',
+          );
+        }
+      });
+    });
+  });
 });

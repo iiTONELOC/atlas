@@ -1,3 +1,4 @@
+import {randomUUID} from 'crypto';
 import {IsDate, IsOptional, IsUUID} from 'class-validator';
 import {
   BaseEntity,
@@ -29,3 +30,25 @@ export abstract class SoftDeleteEntity extends TimestampedEntity {
   @IsDate({message: 'DeletedAt must be a valid Date'})
   deletedAt!: Date | null;
 }
+
+type HasAuditFields = {
+  id?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+};
+
+export const populateBaseEntityFields = <T extends HasAuditFields>(entity: T): T => {
+  const now = new Date();
+
+  if (!entity.id) {
+    entity.id = randomUUID();
+  }
+  if (!entity.createdAt) {
+    entity.createdAt = now;
+  }
+  if (!entity.updatedAt) {
+    entity.updatedAt = now;
+  }
+
+  return entity;
+};

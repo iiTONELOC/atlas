@@ -1,4 +1,3 @@
-// tests/db/repositories/sessionRepository.test.ts
 import {describe, test, expect, beforeAll, afterAll, beforeEach} from 'bun:test';
 import {DataSource} from 'typeorm';
 import {User, Session} from '../../../src/db/entities';
@@ -339,6 +338,100 @@ describe('SessionRepository', () => {
       await expect(sessionRepo.delete('550e8400-e29b-41d4-a716-446655440000')).rejects.toThrow(
         'Session not found',
       );
+    });
+  });
+
+  describe('validation', () => {
+    describe('create validation', () => {
+      test('rejects session with invalid expiresAt types', async () => {
+        const invalidDates = ['2024-01-01', 123, null, undefined, {}, [], true];
+        for (const expiresAt of invalidDates) {
+          await expect(
+            sessionRepo.create({
+              userId: testUserId,
+              expiresAt: expiresAt as any,
+              userAgent: TEST_USER_AGENT,
+              ipAddress: TEST_IP_ADDRESS,
+            }),
+          ).rejects.toThrow('Validation failed');
+        }
+      });
+
+      test('rejects session with invalid userAgent types', async () => {
+        const invalidAgents = [null, undefined, 123, {}, [], true];
+        for (const userAgent of invalidAgents) {
+          await expect(
+            sessionRepo.create({
+              userId: testUserId,
+              expiresAt: new Date(Date.now() + 3600000),
+              userAgent: userAgent as any,
+              ipAddress: TEST_IP_ADDRESS,
+            }),
+          ).rejects.toThrow('Validation failed');
+        }
+      });
+
+      test('rejects session with invalid ipAddress types', async () => {
+        const invalidIPs = [null, undefined, 123, {}, [], true];
+        for (const ipAddress of invalidIPs) {
+          await expect(
+            sessionRepo.create({
+              userId: testUserId,
+              expiresAt: new Date(Date.now() + 3600000),
+              userAgent: TEST_USER_AGENT,
+              ipAddress: ipAddress as any,
+            }),
+          ).rejects.toThrow('Validation failed');
+        }
+      });
+
+      test('accepts valid session data', async () => {
+        const expiresAt = new Date(Date.now() + 3600000);
+        const session = await sessionRepo.create({
+          userId: testUserId,
+          expiresAt,
+          userAgent: 'Valid User Agent',
+          ipAddress: '192.168.1.1',
+        });
+        expect(session.userAgent).toBe('Valid User Agent');
+        expect(session.ipAddress).toBe('192.168.1.1');
+      });
+    });
+
+    describe('update validation', () => {
+      test('rejects update with invalid expiresAt types', async () => {
+        const expiresAt = new Date(Date.now() + 3600000);
+        const created = await sessionRepo.create({
+          userId: testUserId,
+          expiresAt,
+          userAgent: TEST_USER_AGENT,
+          ipAddress: TEST_IP_ADDRESS,
+        });
+
+        const invalidDates = ['2024-01-01', 123, {}, []];
+        for (const date of invalidDates) {
+          await expect(sessionRepo.update(created.id, {expiresAt: date as any})).rejects.toThrow(
+            'Validation failed',
+          );
+        }
+      });
+
+      test('rejects update with invalid userAgent types', async () => {
+        const expiresAt = new Date(Date.now() + 3600000);
+        const created = await sessionRepo.create({
+          userId: testUserId,
+          expiresAt,
+          userAgent: TEST_USER_AGENT,
+          ipAddress: TEST_IP_ADDRESS,
+        });
+
+        const invalidAgents = [null, 123, {}, []];
+        for (const userAgent of invalidAgents) {
+          await expect(
+            sessionRepo.update(created.id, {userAgent: userAgent as any}),
+          ).rejects.toThrow('Validation failed');
+        }
+      });
     });
   });
 });

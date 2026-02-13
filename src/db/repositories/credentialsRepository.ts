@@ -1,5 +1,7 @@
 import {Repository} from 'typeorm';
+import {validate} from 'class-validator';
 import {Credentials} from '../entities';
+import {populateBaseEntityFields} from '../entities/helpers';
 
 export type CreateCredentialsRepoProps = {
   email: string;
@@ -9,8 +11,21 @@ export type CreateCredentialsRepoProps = {
 export class CredentialsRepository {
   constructor(private readonly repo: Repository<Credentials>) {}
 
-  create({email, password}: CreateCredentialsRepoProps) {
-    return this.repo.save(this.repo.create({email, password}));
+  async create({email, password}: CreateCredentialsRepoProps) {
+    const credentials = this.repo.create({email, password});
+    populateBaseEntityFields(credentials);
+
+    const errors = await validate(credentials);
+    if (errors.length > 0) {
+      throw new Error(
+        `Validation failed: ${errors
+          .map(e => Object.values(e.constraints || {}))
+          .flat()
+          .join(', ')}`,
+      );
+    }
+
+    return this.repo.save(credentials);
   }
 
   findByEmail(email: string) {
@@ -28,6 +43,16 @@ export class CredentialsRepository {
     }
     if (password !== undefined) {
       credentials.password = password;
+    }
+
+    const errors = await validate(credentials);
+    if (errors.length > 0) {
+      throw new Error(
+        `Validation failed: ${errors
+          .map(e => Object.values(e.constraints || {}))
+          .flat()
+          .join(', ')}`,
+      );
     }
 
     return this.repo.save(credentials);

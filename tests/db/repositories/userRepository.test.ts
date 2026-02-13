@@ -1,11 +1,10 @@
-// test/repositories/UserRepository.test.ts
 import {describe, test, expect, beforeAll, afterAll, beforeEach} from 'bun:test';
 import {DataSource} from 'typeorm';
 import {User, AccountStatus} from '../../../src/db/entities';
-import {getUserRepository} from '../../../src/db/repositories/userRepository';
+import {getUserRepository, type UserRepository} from '../../../src/db/repositories/userRepository';
 import {createTestDataSource, cleanupTestDataSource} from '../../setup';
 
-const TEST_USER_NAME = 'Test User';
+const TEST_USER_NAME = 'TestUser';
 const TEST_USER_EMAIL = 'test@test.com';
 const TEST_USER_PASSWORD = 'password123456789badpassword';
 
@@ -158,15 +157,15 @@ describe('UserRepository', () => {
           email: TEST_USER_EMAIL,
           password: TEST_USER_PASSWORD,
         },
-        displayName: 'Original Name',
+        displayName: 'OriginalName',
       });
 
       const updated = await userRepo.update(user.id, {
-        displayName: 'Updated Name',
+        displayName: 'UpdatedName',
         accountStatus: AccountStatus.ACTIVE,
       });
 
-      expect(updated.displayName).toBe('Updated Name');
+      expect(updated.displayName).toBe('UpdatedName');
       expect(updated.accountStatus).toBe(AccountStatus.ACTIVE);
     });
 
@@ -176,14 +175,14 @@ describe('UserRepository', () => {
           email: TEST_USER_EMAIL,
           password: TEST_USER_PASSWORD,
         },
-        displayName: 'Original Name',
+        displayName: 'OriginalName',
       });
 
       const updated = await userRepo.update(user.id, {
-        displayName: 'New Name',
+        displayName: 'NewName',
       });
 
-      expect(updated.displayName).toBe('New Name');
+      expect(updated.displayName).toBe('NewName');
       expect(updated.accountStatus).toBe(AccountStatus.PENDING);
     });
 
@@ -263,6 +262,114 @@ describe('UserRepository', () => {
       expect(found?.lists).toBeDefined();
       expect(Array.isArray(found?.lists)).toBe(true);
       expect(found?.lists.length).toBe(0);
+    });
+  });
+
+  describe('validation', () => {
+    describe('create validation', () => {
+      test('rejects user with invalid displayName types', async () => {
+        const invalidNames = [123, {}, [], true];
+        for (const displayName of invalidNames) {
+          await expect(
+            userRepo.create({
+              credentials: {
+                email: TEST_USER_EMAIL,
+                password: TEST_USER_PASSWORD,
+              },
+              displayName: displayName as any,
+            }),
+          ).rejects.toThrow('Validation failed');
+        }
+      });
+
+      test('rejects user with non-alphanumeric displayName', async () => {
+        const invalidNames = ['user@123', 'name!test', 'with spaces', 'user#tag'];
+        for (const displayName of invalidNames) {
+          await expect(
+            userRepo.create({
+              credentials: {
+                email: TEST_USER_EMAIL,
+                password: TEST_USER_PASSWORD,
+              },
+              displayName,
+            }),
+          ).rejects.toThrow('Validation failed');
+        }
+      });
+
+      test('accepts valid alphanumeric displayNames', async () => {
+        const validNames = ['user123', 'TestUser', 'username456'];
+        for (const displayName of validNames) {
+          const user = await userRepo.create({
+            credentials: {
+              email: `${displayName}@test.com`,
+              password: TEST_USER_PASSWORD,
+            },
+            displayName,
+          });
+          expect(user.displayName).toBe(displayName);
+        }
+      });
+
+      test('accepts null displayName', async () => {
+        const user = await userRepo.create({
+          credentials: {
+            email: 'nullname@test.com',
+            password: TEST_USER_PASSWORD,
+          },
+        });
+        expect(user.displayName).toBeNull();
+      });
+    });
+
+    describe('update validation', () => {
+      test('rejects update with invalid displayName types', async () => {
+        const created = await userRepo.create({
+          credentials: {
+            email: TEST_USER_EMAIL,
+            password: TEST_USER_PASSWORD,
+          },
+        });
+
+        const invalidNames = [123, {}, [], true];
+        for (const displayName of invalidNames) {
+          await expect(
+            userRepo.update(created.id, {displayName: displayName as any}),
+          ).rejects.toThrow('Validation failed');
+        }
+      });
+
+      test('rejects update with non-alphanumeric displayName', async () => {
+        const created = await userRepo.create({
+          credentials: {
+            email: TEST_USER_EMAIL,
+            password: TEST_USER_PASSWORD,
+          },
+        });
+
+        const invalidNames = ['user@123', 'name!test', 'with spaces'];
+        for (const displayName of invalidNames) {
+          await expect(userRepo.update(created.id, {displayName})).rejects.toThrow(
+            'Validation failed',
+          );
+        }
+      });
+
+      test('rejects update with invalid accountStatus', async () => {
+        const created = await userRepo.create({
+          credentials: {
+            email: TEST_USER_EMAIL,
+            password: TEST_USER_PASSWORD,
+          },
+        });
+
+        const invalidStatuses = ['INVALID', 'UNKNOWN', 123, null];
+        for (const accountStatus of invalidStatuses) {
+          await expect(
+            userRepo.update(created.id, {accountStatus: accountStatus as any}),
+          ).rejects.toThrow('Validation failed');
+        }
+      });
     });
   });
 });

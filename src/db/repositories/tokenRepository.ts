@@ -1,5 +1,7 @@
 import {Repository} from 'typeorm';
+import {validate} from 'class-validator';
 import {Token, type TokenType} from '../entities';
+import {populateBaseEntityFields} from '../entities/helpers';
 
 export type CreateTokenRepoProps = {
   sessionId: string;
@@ -12,7 +14,7 @@ export type CreateTokenRepoProps = {
 export class TokenRepository {
   constructor(private readonly repo: Repository<Token>) {}
 
-  create({sessionId, jti, tokenHash, type, expiresAt}: CreateTokenRepoProps) {
+  async create({sessionId, jti, tokenHash, type, expiresAt}: CreateTokenRepoProps) {
     const token = this.repo.create({
       session: {id: sessionId},
       jti,
@@ -20,6 +22,18 @@ export class TokenRepository {
       type,
       expiresAt,
     });
+    populateBaseEntityFields(token);
+
+    const errors = await validate(token);
+    if (errors.length > 0) {
+      throw new Error(
+        `Validation failed: ${errors
+          .map(e => Object.values(e.constraints || {}))
+          .flat()
+          .join(', ')}`,
+      );
+    }
+
     return this.repo.save(token);
   }
 

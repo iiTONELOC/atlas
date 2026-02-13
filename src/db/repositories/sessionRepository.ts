@@ -1,5 +1,7 @@
 import {Repository} from 'typeorm';
+import {validate} from 'class-validator';
 import {Session} from '../entities';
+import {populateBaseEntityFields} from '../entities/helpers';
 
 export type CreateSessionRepoProps = {
   userId: string;
@@ -17,13 +19,25 @@ export type UpdateSessionRepoProps = {
 export class SessionRepository {
   constructor(private readonly repo: Repository<Session>) {}
 
-  create({userId, expiresAt, userAgent, ipAddress}: CreateSessionRepoProps) {
+  async create({userId, expiresAt, userAgent, ipAddress}: CreateSessionRepoProps) {
     const session = this.repo.create({
       user: {id: userId},
       expiresAt,
       userAgent,
       ipAddress,
     });
+    populateBaseEntityFields(session);
+
+    const errors = await validate(session);
+    if (errors.length > 0) {
+      throw new Error(
+        `Validation failed: ${errors
+          .map(e => Object.values(e.constraints || {}))
+          .flat()
+          .join(', ')}`,
+      );
+    }
+
     return this.repo.save(session);
   }
 
@@ -52,6 +66,16 @@ export class SessionRepository {
     }
     if (ipAddress !== undefined) {
       session.ipAddress = ipAddress;
+    }
+
+    const errors = await validate(session);
+    if (errors.length > 0) {
+      throw new Error(
+        `Validation failed: ${errors
+          .map(e => Object.values(e.constraints || {}))
+          .flat()
+          .join(', ')}`,
+      );
     }
 
     return this.repo.save(session);

@@ -1,5 +1,7 @@
 import {Repository} from 'typeorm';
+import {validate} from 'class-validator';
 import {List} from '../entities';
+import {populateBaseEntityFields} from '../entities/helpers';
 
 export type CreateListRepoProps = {
   name: string;
@@ -15,12 +17,24 @@ export type UpdateListRepoProps = {
 export class ListRepository {
   constructor(private readonly repo: Repository<List>) {}
 
-  create({name, userId, isDefault = false}: CreateListRepoProps) {
+  async create({name, userId, isDefault = false}: CreateListRepoProps) {
     const list = this.repo.create({
       name,
       isDefault,
       user: {id: userId},
     });
+    populateBaseEntityFields(list);
+
+    const errors = await validate(list);
+    if (errors.length > 0) {
+      throw new Error(
+        `Validation failed: ${errors
+          .map(e => Object.values(e.constraints || {}))
+          .flat()
+          .join(', ')}`,
+      );
+    }
+
     return this.repo.save(list);
   }
 
@@ -43,6 +57,16 @@ export class ListRepository {
     }
     if (isDefault !== undefined) {
       list.isDefault = isDefault;
+    }
+
+    const errors = await validate(list);
+    if (errors.length > 0) {
+      throw new Error(
+        `Validation failed: ${errors
+          .map(e => Object.values(e.constraints || {}))
+          .flat()
+          .join(', ')}`,
+      );
     }
 
     return this.repo.save(list);

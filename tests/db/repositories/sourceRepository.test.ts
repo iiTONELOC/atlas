@@ -1,4 +1,3 @@
-// tests/db/repositories/sourceRepository.test.ts
 import {describe, test, expect, beforeAll, afterAll, beforeEach} from 'bun:test';
 import {DataSource} from 'typeorm';
 import {Source, SourceName} from '../../../src/db/entities';
@@ -240,6 +239,77 @@ describe('SourceRepository', () => {
       await expect(sourceRepo.delete('550e8400-e29b-41d4-a716-446655440000')).rejects.toThrow(
         'Source not found',
       );
+    });
+  });
+
+  describe('validation', () => {
+    describe('create validation', () => {
+      test('rejects source with invalid url format', async () => {
+        const invalidUrls = ['not-a-url', 'htp://bad', 'ftp only', 'no-protocol.com'];
+        for (const url of invalidUrls) {
+          await expect(
+            sourceRepo.create({
+              name: TEST_SOURCE_NAME,
+              url,
+            }),
+          ).rejects.toThrow('Validation failed');
+        }
+      });
+
+      test('rejects source with invalid url types', async () => {
+        const invalidUrls = [null, undefined, 123, {}, [], true];
+        for (const url of invalidUrls) {
+          await expect(
+            sourceRepo.create({
+              name: TEST_SOURCE_NAME,
+              url: url as any,
+            }),
+          ).rejects.toThrow('Validation failed');
+        }
+      });
+
+      test('accepts valid url formats', async () => {
+        const validUrls = [
+          'https://example.com',
+          'http://test.org/path',
+          'https://sub.domain.com:8080/api',
+        ];
+        for (const url of validUrls) {
+          const source = await sourceRepo.create({
+            name: SourceName.BARCODE_INDEX,
+            url,
+          });
+          expect(source.url).toBe(url);
+        }
+      });
+    });
+
+    describe('update validation', () => {
+      test('rejects update with invalid url format', async () => {
+        const created = await sourceRepo.create({
+          name: TEST_SOURCE_NAME,
+          url: TEST_SOURCE_URL,
+        });
+
+        const invalidUrls = ['not-a-url', 'htp://bad'];
+        for (const url of invalidUrls) {
+          await expect(sourceRepo.update(created.id, {url})).rejects.toThrow('Validation failed');
+        }
+      });
+
+      test('rejects update with invalid url types', async () => {
+        const created = await sourceRepo.create({
+          name: TEST_SOURCE_NAME,
+          url: TEST_SOURCE_URL,
+        });
+
+        const invalidUrls = [null, 123, {}, []];
+        for (const url of invalidUrls) {
+          await expect(sourceRepo.update(created.id, {url: url as any})).rejects.toThrow(
+            'Validation failed',
+          );
+        }
+      });
     });
   });
 });

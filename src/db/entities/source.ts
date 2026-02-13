@@ -17,7 +17,10 @@ export class Source extends SoftDeleteEntity {
 
   @Column('tinytext')
   @IsString()
-  @IsUrl()
+  @IsUrl({
+    require_protocol: true,
+    protocols: ['http', 'https'],
+  })
   url!: string;
 
   @OneToMany(() => Product, product => product.source)

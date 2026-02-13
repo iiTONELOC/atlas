@@ -344,4 +344,90 @@ describe('ListItemRepository', () => {
       expect(found).toBeNull();
     });
   });
+
+  describe('validation', () => {
+    describe('create validation', () => {
+      test('rejects list item with invalid quantity types', async () => {
+        const invalidQuantities = ['5', true, {}, [], null];
+        for (const quantity of invalidQuantities) {
+          await expect(
+            listItemRepo.create({
+              userProductId: testUserProduct.id,
+              listId: testList.id,
+              quantity: quantity as any,
+            }),
+          ).rejects.toThrow('Validation failed');
+        }
+      });
+
+      test('rejects list item with invalid isComplete types', async () => {
+        const invalidCompletes = ['true', 'yes', 1, 0, {}, []];
+        for (const isComplete of invalidCompletes) {
+          await expect(
+            listItemRepo.create({
+              userProductId: testUserProduct.id,
+              listId: testList.id,
+              isComplete: isComplete as any,
+            }),
+          ).rejects.toThrow('Validation failed');
+        }
+      });
+
+      test('rejects list item with invalid notes types', async () => {
+        const invalidNotes = [123, {}, [], true];
+        for (const notes of invalidNotes) {
+          await expect(
+            listItemRepo.create({
+              userProductId: testUserProduct.id,
+              listId: testList.id,
+              notes: notes as any,
+            }),
+          ).rejects.toThrow('Validation failed');
+        }
+      });
+
+      test('accepts valid quantity values', async () => {
+        const validQuantities = [1, 5, 10, 100, 999];
+        for (const quantity of validQuantities) {
+          const item = await listItemRepo.create({
+            userProductId: testUserProduct.id,
+            listId: testList.id,
+            quantity,
+          });
+          expect(item.quantity).toBe(quantity);
+          await listItemRepo.delete(item.id);
+        }
+      });
+    });
+
+    describe('update validation', () => {
+      test('rejects update with invalid quantity types', async () => {
+        const created = await listItemRepo.create({
+          userProductId: testUserProduct.id,
+          listId: testList.id,
+        });
+
+        const invalidQuantities = ['5', true, {}, []];
+        for (const quantity of invalidQuantities) {
+          await expect(
+            listItemRepo.update(created.id, {quantity: quantity as any}),
+          ).rejects.toThrow('Validation failed');
+        }
+      });
+
+      test('rejects update with invalid isComplete types', async () => {
+        const created = await listItemRepo.create({
+          userProductId: testUserProduct.id,
+          listId: testList.id,
+        });
+
+        const invalidCompletes = ['true', 1, 0, {}];
+        for (const isComplete of invalidCompletes) {
+          await expect(
+            listItemRepo.update(created.id, {isComplete: isComplete as any}),
+          ).rejects.toThrow('Validation failed');
+        }
+      });
+    });
+  });
 });

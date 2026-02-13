@@ -1,4 +1,3 @@
-// tests/db/repositories/tokenRepository.test.ts
 import {describe, test, expect, beforeAll, afterAll, beforeEach} from 'bun:test';
 import {DataSource} from 'typeorm';
 import {User, Session, Token, TokenType} from '../../../src/db/entities';
@@ -333,6 +332,112 @@ describe('TokenRepository', () => {
       await expect(tokenRepo.delete('550e8400-e29b-41d4-a716-446655440000')).rejects.toThrow(
         'Token not found',
       );
+    });
+  });
+
+  describe('validation', () => {
+    describe('create validation', () => {
+      test('rejects token with empty jti', async () => {
+        const expiresAt = new Date(Date.now() + 7200000);
+        await expect(
+          tokenRepo.create({
+            sessionId: testSessionId,
+            jti: '',
+            tokenHash: TEST_TOKEN_HASH,
+            type: TEST_TOKEN_TYPE,
+            expiresAt,
+          }),
+        ).rejects.toThrow('Validation failed');
+      });
+
+      test('rejects token with empty tokenHash', async () => {
+        const expiresAt = new Date(Date.now() + 7200000);
+        await expect(
+          tokenRepo.create({
+            sessionId: testSessionId,
+            jti: TEST_JTI,
+            tokenHash: '',
+            type: TEST_TOKEN_TYPE,
+            expiresAt,
+          }),
+        ).rejects.toThrow('Validation failed');
+      });
+
+      test('rejects token with invalid jti types', async () => {
+        const expiresAt = new Date(Date.now() + 7200000);
+        const invalidJtis = [null, undefined, 123, {}, [], true];
+        for (const jti of invalidJtis) {
+          await expect(
+            tokenRepo.create({
+              sessionId: testSessionId,
+              jti: jti as any,
+              tokenHash: TEST_TOKEN_HASH,
+              type: TEST_TOKEN_TYPE,
+              expiresAt,
+            }),
+          ).rejects.toThrow('Validation failed');
+        }
+      });
+
+      test('rejects token with invalid tokenHash types', async () => {
+        const expiresAt = new Date(Date.now() + 7200000);
+        const invalidHashes = [null, undefined, 123, {}, [], true];
+        for (const tokenHash of invalidHashes) {
+          await expect(
+            tokenRepo.create({
+              sessionId: testSessionId,
+              jti: TEST_JTI,
+              tokenHash: tokenHash as any,
+              type: TEST_TOKEN_TYPE,
+              expiresAt,
+            }),
+          ).rejects.toThrow('Validation failed');
+        }
+      });
+
+      test('rejects token with invalid type', async () => {
+        const expiresAt = new Date(Date.now() + 7200000);
+        const invalidTypes = ['INVALID', 'TOKEN', null, undefined, 123];
+        for (const type of invalidTypes) {
+          await expect(
+            tokenRepo.create({
+              sessionId: testSessionId,
+              jti: TEST_JTI,
+              tokenHash: TEST_TOKEN_HASH,
+              type: type as any,
+              expiresAt,
+            }),
+          ).rejects.toThrow('Validation failed');
+        }
+      });
+
+      test('rejects token with invalid expiresAt types', async () => {
+        const invalidDates = ['2024-01-01', 123, null, undefined, {}, [], true];
+        for (const expiresAt of invalidDates) {
+          await expect(
+            tokenRepo.create({
+              sessionId: testSessionId,
+              jti: TEST_JTI,
+              tokenHash: TEST_TOKEN_HASH,
+              type: TEST_TOKEN_TYPE,
+              expiresAt: expiresAt as any,
+            }),
+          ).rejects.toThrow('Validation failed');
+        }
+      });
+
+      test('accepts valid token data', async () => {
+        const expiresAt = new Date(Date.now() + 7200000);
+        const token = await tokenRepo.create({
+          sessionId: testSessionId,
+          jti: 'unique-jti-123',
+          tokenHash: 'validhash123',
+          type: TEST_TOKEN_TYPE,
+          expiresAt,
+        });
+        expect(token.jti).toBe('unique-jti-123');
+        expect(token.tokenHash).toBe('validhash123');
+      });
     });
   });
 });
