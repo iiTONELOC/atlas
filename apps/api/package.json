@@ -5,9 +5,9 @@
   "type": "module",
   "description": "GraphQL API Server for TrashScanner™",
   "scripts": {
-    "dev": "bun --hot src/server.ts",
-    "build": "bun build src/server.ts --outdir dist --target bun",
-    "start": "bun run dist/server.js"
+    "dev": "bun --hot src/dev-server.ts",
+    "build": "bun build src/prod-server.ts --outdir dist --target bun && cp src/schema/schema.graphql dist/schema.graphql",
+    "start": "bun run dist/prod-server.js"
   },
   "dependencies": {
     "@apollo/server": "^5.4.0",

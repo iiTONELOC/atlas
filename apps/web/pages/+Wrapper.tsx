@@ -1,7 +1,7 @@
+import './index.css';
+import type {ReactNode} from 'react';
 import {ApolloProvider} from '@apollo/client/react';
 import {ApolloClient, HttpLink, InMemoryCache} from '@apollo/client';
-import type {ReactNode} from 'react';
-import '../index.css';
 
 const apolloClient = new ApolloClient({
   link: new HttpLink({

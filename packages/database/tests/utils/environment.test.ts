@@ -6,7 +6,6 @@ let originalEnv: NodeJS.ProcessEnv;
 
 const setAllRequiredEnvs = () => {
   process.env.NODE_ENV = 'test';
-  process.env.APP_PORT = '5005';
   process.env.DB_HOST = 'test_db';
   process.env.DB_PORT = '3306';
   process.env.DB_NAME = 'atlas_db_test';
@@ -124,7 +123,6 @@ describe('Environment Utils Tests', () => {
       setAllRequiredEnvs();
 
       const {requireIntEnv} = await loadEnv();
-      expect(requireIntEnv('APP_PORT')).toBe(5005);
       expect(requireIntEnv('DB_PORT')).toBe(3306);
     });
 
@@ -135,7 +133,7 @@ describe('Environment Utils Tests', () => {
       expect(() => requireIntEnv('MISSING_INT')).toThrow();
     });
 
-    describe('requireIntEnv fuzzing', () => {
+    describe('APP_PORT fuzzing', () => {
       const cases = ['abc', '12.5', '', ' ', '{}', '[]', '-1'];
 
       for (const value of cases) {

@@ -4,6 +4,8 @@ services:
       context: ../../
       dockerfile: packages/database/Dockerfile
     working_dir: /app/packages/database
+    env_file:
+      - ../../.env.test
     volumes:
       - ../../:/app
     ports:

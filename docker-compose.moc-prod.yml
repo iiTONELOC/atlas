@@ -1,56 +1,45 @@
 services:
-  api:
+  app:
     image: oven/bun:latest
     working_dir: /app
     volumes:
       - ./:/app
-    command: ['/bin/sh', '-c', 'bun install && bun --cwd apps/api dev']
+    command:
+      [
+        '/bin/sh',
+        '-c',
+        'rm -rf apps/web/dist apps/api/dist packages/database/dist && bun install && bun run build && bun run start',
+      ]
     ports:
       - '127.0.0.1:${APP_PORT:-3000}:${APP_PORT:-3000}'
     env_file:
-      - ./.env.local
+      - ../.env
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
       APP_PORT: ${APP_PORT:-3000}
-      DB_HOST: dev_db
+      DB_HOST: prod_db
       DB_PORT: 3306
       DB_NAME: ${DB_NAME:-atlas_db}
       DB_USER: ${DB_USER:-atlas_user}
       DB_PASSWORD: ${DB_PASSWORD:-p@$$w0rd}
-      DB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootp@$$w0rd}
       ARGON2ID_MEMORY: ${ARGON2ID_MEMORY:-65536}
       ARGON2ID_TIME: ${ARGON2ID_TIME:-3}
       PWD_PEPPER: ${PWD_PEPPER:-zwjDTxT5YxdWrcBnemVd1g==}
     depends_on:
-      dev_db:
+      prod_db:
         condition: service_healthy
 
-  web:
-    image: oven/bun:latest
-    working_dir: /app
-    volumes:
-      - ./:/app
-    command: ['/bin/sh', '-c', 'bun install && bun --cwd apps/web dev']
-    ports:
-      - '127.0.0.1:${VITE_PORT:-5173}:${VITE_PORT:-5173}'
-    environment:
-      VITE_GRAPHQL_PROXY_TARGET: http://api:${APP_PORT:-3000}
-      VITE_PORT: ${VITE_PORT:-5173}
-      APP_PORT: ${APP_PORT:-3000}
-    depends_on:
-      - api
-
-  dev_db:
+  prod_db:
     image: mariadb:12
     env_file:
-      - ./.env.local
+      - ../.env
     environment:
       MARIADB_DATABASE: ${DB_NAME:-atlas_db}
       MARIADB_USER: ${DB_USER:-atlas_user}
       MARIADB_PASSWORD: ${DB_PASSWORD:-p@$$w0rd}
       MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootp@$$w0rd}
     volumes:
-      - db-dev-data:/var/lib/mysql
+      - db-prod-data:/var/lib/mysql
     healthcheck:
       test:
         [
@@ -62,4 +51,4 @@ services:
       retries: 10
 
 volumes:
-  db-dev-data:
+  db-prod-data:

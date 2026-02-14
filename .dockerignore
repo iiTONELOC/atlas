@@ -1,10 +1,12 @@
 .git
+.github
 node_modules
-bun.lock
-package-lock.json
 .vscode
 .DS_Store
-.env
-dist
+.env.local
+.env.production
 *.log
 .example.env
+README.MD
+docker-compose*.yml
+Procfile

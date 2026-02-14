@@ -16,6 +16,7 @@ jobs:
       DB_USER: test_user
       DB_PASSWORD: test_password
       DB_ROOT_PASSWORD: rootp@ssword
+      APP_PORT: 3000
 
     services:
       test_db:

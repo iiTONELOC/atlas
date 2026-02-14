@@ -6,7 +6,9 @@ import vike from 'vike/plugin';
 
 export default defineConfig(({mode}) => {
   const env = loadEnv(mode, process.cwd(), '');
-  const proxyTarget = env.VITE_GRAPHQL_PROXY_TARGET ?? 'http://api:3000';
+  const appPort = env.APP_PORT ?? '3000';
+  const proxyTarget = env.VITE_GRAPHQL_PROXY_TARGET ?? `http://api:${appPort}`;
+  const webPort = parseInt(env.VITE_PORT ?? '5173', 10);
 
   const devCSP = [
     "default-src 'self'",
@@ -51,8 +53,11 @@ export default defineConfig(({mode}) => {
         },
       }),
     ],
+    resolve: {
+      dedupe: ['vike', 'vike-react', 'react', 'react-dom'],
+    },
     server: {
-      port: 5173,
+      port: webPort,
       host: true,
       headers: {
         'Content-Security-Policy': devCSP,
@@ -67,6 +72,7 @@ export default defineConfig(({mode}) => {
     build: {
       outDir: 'dist',
       sourcemap: true,
+      minify: false,
     },
   };
 });
