@@ -30,8 +30,7 @@ services:
     working_dir: /app
     volumes:
       - ./:/app
-    command:
-      ['/bin/sh', '-c', 'bun install && bun --cwd apps/web dev -- --host 0.0.0.0 --port 5173']
+    command: ['/bin/sh', '-c', 'bun install && bun --cwd apps/web dev']
     ports:
       - '127.0.0.1:5173:5173'
     environment:

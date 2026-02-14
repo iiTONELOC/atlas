@@ -1,34 +1,18 @@
-import {ApolloServer} from '@apollo/server';
 import {startStandaloneServer} from '@apollo/server/standalone';
-import {AppDataSource} from 'atlas-database';
-import {typeDefs} from './schema';
-import {resolvers} from './resolvers';
+import {initializeGraphQLServer, getDataSource} from './graphql-server';
 import {existsSync} from 'node:fs';
 import {join} from 'node:path';
 
 const PORT = Number(process.env.PORT) || 3000;
 const WEB_DIST_PATH = join(import.meta.dirname, '../../web/dist');
 
-// Initialize database
-await AppDataSource.initialize()
-  .then(() => {
-    console.log('✓ Database initialized');
-  })
-  .catch((error: Error) => {
-    console.error('✗ Database initialization failed:', error);
-    process.exit(1);
-  });
-
-// Initialize Apollo Server
-const server = new ApolloServer({
-  typeDefs,
-  resolvers,
-});
+// Initialize GraphQL server (includes database initialization)
+const server = await initializeGraphQLServer();
 
 const {url} = await startStandaloneServer(server, {
   listen: {port: PORT},
   context: async () => ({
-    dataSource: AppDataSource,
+    dataSource: getDataSource(),
   }),
 });
 

@@ -1,7 +1,5 @@
-import {ApolloServer} from '@apollo/server';
-import {AppDataSource} from 'atlas-database';
-import {typeDefs} from './schema';
-import {resolvers} from './resolvers';
+import {initializeGraphQLServer, getDataSource} from './graphql-server';
+import {handleGraphQLRequest} from './graphql-handler';
 import {existsSync} from 'node:fs';
 import {join} from 'node:path';
 
@@ -9,22 +7,32 @@ const PORT = Number(process.env.PORT) || 3000;
 const WEB_DIST_PATH = join(import.meta.dirname, '../../web/dist');
 const isProduction = process.env.NODE_ENV === 'production';
 
-// Initialize database
-await AppDataSource.initialize()
-  .then(() => {
-    console.log('✓ Database initialized');
-  })
-  .catch((error: Error) => {
-    console.error('✗ Database initialization failed:', error);
-    process.exit(1);
-  });
+const productionCSP = [
+  "default-src 'self'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+  "object-src 'none'",
+  "script-src 'self'",
+  "style-src 'self'",
+  "img-src 'self' data:",
+  "font-src 'self' data:",
+  "connect-src 'self'",
+  "worker-src 'self'",
+  "manifest-src 'self'",
+].join('; ');
 
-// Initialize Apollo Server
-const apolloServer = new ApolloServer({
-  typeDefs,
-  resolvers,
-});
+const securityHeaders = {
+  'Content-Security-Policy': productionCSP,
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  'X-XSS-Protection': '1; mode=block',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Permissions-Policy': 'geolocation=(), microphone=()',
+};
 
+// Initialize GraphQL server (includes database initialization)
+const apolloServer = await initializeGraphQLServer();
 await apolloServer.start();
 
 // Create Bun server that handles both GraphQL and static files
@@ -33,14 +41,9 @@ Bun.serve({
   async fetch(req: Request) {
     const url = new URL(req.url);
 
-    // Handle GraphQL requests - use standalone server endpoint
+    // Handle GraphQL requests
     if (url.pathname === '/graphql') {
-      // Apollo standalone server handles this internally
-      // For now, return a placeholder
-      return new Response(JSON.stringify({error: 'Use standalone server for GraphQL'}), {
-        status: 501,
-        headers: {'Content-Type': 'application/json'},
-      });
+      return handleGraphQLRequest(req, apolloServer, getDataSource());
     }
 
     // Serve static files in production
@@ -54,9 +57,16 @@ Bun.serve({
 
       const file = Bun.file(filePath);
       if (await file.exists()) {
-        return new Response(file);
+        const headers = new Headers(securityHeaders);
+        if (file.type) {
+          headers.set('Content-Type', file.type);
+        }
+        return new Response(file, {headers});
       }
-      return new Response('Not Found', {status: 404});
+      return new Response('Not Found', {
+        status: 404,
+        headers: securityHeaders,
+      });
     }
 
     // Development mode - no static files
