@@ -1,0 +1,22 @@
+{
+  "name": "atlas-api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "GraphQL API Server for TrashScanner™",
+  "scripts": {
+    "dev": "bun --hot src/server.ts",
+    "build": "bun build src/server.ts --outdir dist --target bun",
+    "start": "bun run dist/server.js"
+  },
+  "dependencies": {
+    "@apollo/server": "^5.4.0",
+    "atlas-database": "workspace:*",
+    "graphql": "^16.12.0",
+    "graphql-tag": "^2.12.6"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.9",
+    "typescript": "^5.9.3"
+  }
+}

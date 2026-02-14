@@ -1,10 +1,11 @@
 services:
   test_app:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ../../
+      dockerfile: packages/database/Dockerfile
+    working_dir: /app/packages/database
     volumes:
-      - .:/app
+      - ../../:/app
     ports:
       - '${APP_PORT:-5005}'
     environment:
@@ -15,9 +16,14 @@ services:
       DB_NAME: ${DB_NAME:-atlas_db_test}
       DB_USER: ${DB_USER:-test_user}
       DB_PASSWORD: ${DB_PASSWORD:-test_password}
+      DB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootp@ssw0rd}
+      ARGON2ID_MEMORY: ${ARGON2ID_MEMORY:-65536}
+      ARGON2ID_TIME: ${ARGON2ID_TIME:-3}
+      PWD_PEPPER: ${PWD_PEPPER:-zwjDTxT5YxdWrcBnemVd1g==}
     depends_on:
       test_db:
         condition: service_healthy
+    command: ['bun', 'test', '--watch', '--poll']
 
   test_db:
     image: mariadb:12
@@ -27,7 +33,7 @@ services:
       MARIADB_PASSWORD: ${DB_PASSWORD:-test_password}
       MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootp@$$w0rd}
     volumes:
-      - db-test-data:/var/lib/mysql
+      - db-test-watch-data:/var/lib/mysql
     healthcheck:
       test:
         [
@@ -39,4 +45,4 @@ services:
       retries: 10
 
 volumes:
-  db-test-data:
+  db-test-watch-data:

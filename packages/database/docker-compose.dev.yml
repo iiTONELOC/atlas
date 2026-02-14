@@ -1,23 +1,22 @@
 services:
-  api:
-    image: oven/bun:latest
-    working_dir: /app
+  dev_app:
+    build:
+      context: ../../
+      dockerfile: packages/database/Dockerfile
+    working_dir: /app/packages/database
     volumes:
-      - ./:/app
-    command: ['/bin/sh', '-c', 'bun install && bun --cwd apps/api dev']
+      - ../../:/app
     ports:
-      - '127.0.0.1:3000:3000'
-    env_file:
-      - ../.env.local
+      - '${APP_PORT:-5000}'
     environment:
-      NODE_ENV: development
-      APP_PORT: ${APP_PORT:-3000}
-      DB_HOST: dev_db
-      DB_PORT: 3306
+      NODE_ENV: ${NODE_ENV:-development}
+      APP_PORT: ${APP_PORT:-5000}
+      DB_HOST: ${DB_HOST:-dev_db}
+      DB_PORT: ${DB_PORT:-3306}
       DB_NAME: ${DB_NAME:-atlas_db}
       DB_USER: ${DB_USER:-atlas_user}
       DB_PASSWORD: ${DB_PASSWORD:-p@$$w0rd}
-      DB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootp@$$w0rd}
+      DB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootp@ssw0rd}
       ARGON2ID_MEMORY: ${ARGON2ID_MEMORY:-65536}
       ARGON2ID_TIME: ${ARGON2ID_TIME:-3}
       PWD_PEPPER: ${PWD_PEPPER:-zwjDTxT5YxdWrcBnemVd1g==}
@@ -25,24 +24,8 @@ services:
       dev_db:
         condition: service_healthy
 
-  web:
-    image: oven/bun:latest
-    working_dir: /app
-    volumes:
-      - ./:/app
-    command:
-      ['/bin/sh', '-c', 'bun install && bun --cwd apps/web dev -- --host 0.0.0.0 --port 5173']
-    ports:
-      - '127.0.0.1:5173:5173'
-    environment:
-      VITE_GRAPHQL_PROXY_TARGET: http://api:3000
-    depends_on:
-      - api
-
   dev_db:
     image: mariadb:12
-    env_file:
-      - ../.env.local
     environment:
       MARIADB_DATABASE: ${DB_NAME:-atlas_db}
       MARIADB_USER: ${DB_USER:-atlas_user}
@@ -50,6 +33,8 @@ services:
       MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootp@$$w0rd}
     volumes:
       - db-dev-data:/var/lib/mysql
+    ports:
+      - '${DB_PORT:-3306}:3306'
     healthcheck:
       test:
         [
