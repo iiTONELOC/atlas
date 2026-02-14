@@ -2,6 +2,16 @@
 
 TrashScanner™ Platform - GraphQL API and Web Application
 
+## Overview
+
+This monorepo contains the core components of the TrashScanner™ platform:
+
+- **API Server**: GraphQL API built with Apollo Server and Bun
+- **Web App**: Frontend built with Vite, React, and TypeScript
+- **Database Package**: Shared TypeORM layer for database interactions
+- **Docker Compose**: For local development with API, Web, and MariaDB
+- **Bun Workspaces**: For seamless development across packages
+
 ## Structure
 
 - **`apps/api`** - GraphQL API server (Bun + Apollo Server)
@@ -14,25 +24,22 @@ TrashScanner™ Platform - GraphQL API and Web Application
 # Install dependencies for all workspaces
 bun install
 
-# Start API server (Terminal 1)
+# Start dev stack (API + Web + DB in Docker)
 bun run dev
-
-# Start web app (Terminal 2)
-bun run dev:web
 ```
 
 - API: http://localhost:3000/graphql
-- Web: http://localhost:3000
+- Web: http://localhost:5173
 
 ## Development
 
 ### Root Commands
 
 ```bash
-bun run dev          # Start API server
-bun run dev:web      # Start web app
+bun run dev          # Start API + Web + DB (Docker)
+bun run dev:web      # Start Web (also brings API + DB via compose)
 bun run build        # Build all packages
-bun run test         # Run tests
+bun run tests        # Run database tests
 ```
 
 ### Individual Package Commands
@@ -51,23 +58,6 @@ cd apps/web
 bun run dev
 ```
 
-## Deployment (Heroku)
-
-Single dyno deployment serving both API and static web files.
-
-```bash
-git push heroku main
-```
-
-The build process:
-
-1. Installs all workspace dependencies
-2. Builds database package (TypeScript)
-3. Builds web app (static files → `apps/web/dist/`)
-4. Builds API server (serves GraphQL + static files)
-
-See [MIGRATION.md](MIGRATION.md) for detailed migration and setup instructions.
-
 ## Tech Stack
 
 - **Runtime**: Bun
@@ -80,18 +70,18 @@ See [MIGRATION.md](MIGRATION.md) for detailed migration and setup instructions.
 ## Environment Variables
 
 ```env
-# Database
-DB_HOST=localhost
-DB_PORT=3306
-DB_USER=your_user
-DB_PASSWORD=your_password
-DB_NAME=atlas
-
-# API
-PORT=3000
+# Dev (Docker)
 NODE_ENV=development
+APP_PORT=3000
+
+# Database
+DB_HOST=dev_db
+DB_PORT=3306
+DB_USER=atlas_user
+DB_PASSWORD=p@$$w0rd
+DB_ROOT_PASSWORD=rootp@ssw0rd
+DB_NAME=atlas_db
+ARGON2ID_MEMORY=65536
+ARGON2ID_TIME=3
+PWD_PEPPER=zwjDTxT5YxdWrcBnemVd1g==
 ```
-
-## License
-
-See LICENSE file for details.
