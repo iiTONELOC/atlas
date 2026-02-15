@@ -1,36 +1,24 @@
 services:
-  api:
+  app:
     image: oven/bun:latest
     working_dir: /app
     volumes:
       - ./:/app
-    command: bun --cwd apps/api dev
     env_file:
       - .env.local
     environment:
-      DB_HOST: dev_db
+      NODE_ENV: production
+      DB_HOST: prod_db
       DB_PORT: ${DB_PORT:-3306}
-      NODE_ENV: development
+      APP_PORT: ${APP_PORT:-3000}
     depends_on:
-      dev_db:
+      prod_db:
         condition: service_healthy
     ports:
       - '127.0.0.1:${APP_PORT:-3000}:${APP_PORT:-3000}'
+    command: /bin/sh -lc "bun install && bun run build && bun run start"
 
-  web:
-    image: oven/bun:latest
-    working_dir: /app
-    volumes:
-      - ./:/app
-    command: bun --cwd apps/web dev
-    environment:
-      VITE_GRAPHQL_PROXY_TARGET: 'http://api:${APP_PORT:-3000}'
-    depends_on:
-      - api
-    ports:
-      - '127.0.0.1:${VITE_PORT:-5173}:${VITE_PORT:-5173}'
-
-  dev_db:
+  prod_db:
     image: mariadb:12
     env_file:
       - .env.local
@@ -40,15 +28,13 @@ services:
       MARIADB_PASSWORD: ${DB_PASSWORD:-p@$$w0rd}
       MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootp@$$w0rd}
     volumes:
-      - db-dev-data:/var/lib/mysql
+      - db-prod-data:/var/lib/mysql
     healthcheck:
       test:
         ['CMD-SHELL', 'mariadb-admin ping -h localhost -uroot -p$$MARIADB_ROOT_PASSWORD || exit 1']
       interval: 5s
       timeout: 3s
       retries: 20
-    ports:
-      - '127.0.0.1:${DB_PORT:-3306}:3306'
 
 volumes:
-  db-dev-data:
+  db-prod-data:

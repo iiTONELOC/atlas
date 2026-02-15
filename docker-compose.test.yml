@@ -1,13 +1,13 @@
 services:
   test_app:
     build:
-      context: ../../
-      dockerfile: packages/database/Dockerfile
+      context: .
+      dockerfile: docker/api.Dockerfile
     working_dir: /app/packages/database
     env_file:
-      - ../../.env.test
+      - .env.test
     volumes:
-      - ../../:/app
+      - ./:/app
     ports:
       - '${APP_PORT:-5005}'
     environment:
@@ -25,7 +25,6 @@ services:
     depends_on:
       test_db:
         condition: service_healthy
-    command: ['bun', 'test', '--watch', '--poll']
 
   test_db:
     image: mariadb:12
@@ -35,7 +34,7 @@ services:
       MARIADB_PASSWORD: ${DB_PASSWORD:-test_password}
       MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootp@$$w0rd}
     volumes:
-      - db-test-watch-data:/var/lib/mysql
+      - db-test-data:/var/lib/mysql
     healthcheck:
       test:
         [
@@ -47,4 +46,4 @@ services:
       retries: 10
 
 volumes:
-  db-test-watch-data:
+  db-test-data:
