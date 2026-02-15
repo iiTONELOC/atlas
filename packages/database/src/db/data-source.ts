@@ -10,6 +10,7 @@ import {
   ListItem,
   UserProduct,
   Credentials,
+  RateLimitBucket,
 } from './entities';
 import {DB_HOST, DB_NAME, DB_PORT, DB_USER, DB_PASSWORD} from '../utils/environment';
 
@@ -22,5 +23,16 @@ export const AppDataSource = new DataSource({
   database: DB_NAME,
   synchronize: true,
   logging: false,
-  entities: [User, Credentials, List, ListItem, UserProduct, Product, Source, Session, Token],
+  entities: [
+    User,
+    List,
+    Token,
+    Source,
+    Product,
+    Session,
+    ListItem,
+    UserProduct,
+    Credentials,
+    RateLimitBucket,
+  ],
 });

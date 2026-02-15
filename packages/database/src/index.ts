@@ -8,6 +8,7 @@ export {CredentialsRepository} from './db/repositories/credentialsRepository';
 export {SessionRepository} from './db/repositories/sessionRepository';
 export {TokenRepository} from './db/repositories/tokenRepository';
 export {ListRepository} from './db/repositories/listRepository';
+export {RateLimitBucketRepository} from './db/repositories/rateLimitBucketRepository';
 export {ListItemRepository} from './db/repositories/listItemRepository';
 export {ProductRepository} from './db/repositories/productRepository';
 export {UserProductRepository} from './db/repositories/userProductRepository';

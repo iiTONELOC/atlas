@@ -20,6 +20,15 @@ Enum TokenType {
   REFRESH
 }
 
+Enum RateLimitScope {
+  LOGIN_IP
+  LOGIN_EMAIL
+  EMAIL_SEND_IP
+  EMAIL_SEND_EMAIL
+  PASSWORD_RESET_IP
+  PASSWORD_RESET_EMAIL
+}
+
 // Tables
 Table User {
   id uuid [pk]
@@ -118,6 +127,22 @@ Table Token {
   tokenHash varchar
   type TokenType
   expiresAt datetime
+}
+
+Table RateLimitBucket {
+  id uuid [pk]
+  createdAt datetime
+  updatedAt datetime
+  scope RateLimitScope
+  key varchar(128)
+  windowStart datetime
+  windowSeconds int
+  count int [default: 0]
+  blockedUntil datetime [null]
+
+  Indexes {
+    (scope, key, windowStart, windowSeconds) [unique]
+  }
 }
 
 // Relationships

@@ -43,12 +43,8 @@ export const populateBaseEntityFields = <T extends HasAuditFields>(entity: T): T
   if (!entity.id) {
     entity.id = randomUUID();
   }
-  if (!entity.createdAt) {
-    entity.createdAt = now;
-  }
-  if (!entity.updatedAt) {
-    entity.updatedAt = now;
-  }
+  entity.createdAt ??= now;
+  entity.updatedAt ??= now;
 
   return entity;
 };

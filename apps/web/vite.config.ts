@@ -8,7 +8,7 @@ export default defineConfig(({mode}) => {
   const env = loadEnv(mode, process.cwd(), '');
   const appPort = env.APP_PORT ?? '3000';
   const proxyTarget = env.VITE_GRAPHQL_PROXY_TARGET ?? `http://api:${appPort}`;
-  const webPort = parseInt(env.VITE_PORT ?? '5173', 10);
+  const webPort = Number.parseInt(env.VITE_PORT ?? '5173', 10);
 
   const devCSP = [
     "default-src 'self'",

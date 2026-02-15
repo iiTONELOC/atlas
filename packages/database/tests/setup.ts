@@ -1,4 +1,3 @@
-// test/setup.ts
 import 'reflect-metadata';
 import {DataSource} from 'typeorm';
 import {
@@ -11,6 +10,7 @@ import {
   ListItem,
   UserProduct,
   Credentials,
+  RateLimitBucket,
 } from '../src/db/entities';
 import {DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME} from '../src/utils/environment';
 
@@ -25,7 +25,18 @@ export async function createTestDataSource() {
     synchronize: true,
     dropSchema: false,
     logging: false,
-    entities: [User, Credentials, Session, List, ListItem, Product, Source, UserProduct, Token],
+    entities: [
+      User,
+      List,
+      Token,
+      Source,
+      Session,
+      Product,
+      ListItem,
+      UserProduct,
+      Credentials,
+      RateLimitBucket,
+    ],
   });
 
   await dataSource.initialize();
@@ -41,6 +52,7 @@ export async function createTestDataSource() {
   await dataSource.query('TRUNCATE TABLE product');
   await dataSource.query('TRUNCATE TABLE source');
   await dataSource.query('TRUNCATE TABLE token');
+  await dataSource.query('TRUNCATE TABLE rate_limit_bucket');
   await dataSource.query('SET FOREIGN_KEY_CHECKS = 1');
 
   return dataSource;

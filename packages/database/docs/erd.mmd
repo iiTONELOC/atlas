@@ -58,6 +58,18 @@ erDiagram
     tinytext url
   }
 
+  RATE_LIMIT_BUCKET {
+    uuid id
+    datetime createdAt
+    datetime updatedAt
+    RateLimitScope scope
+    varchar key
+    datetime windowStart
+    int windowSeconds
+    int count
+    datetime blockedUntil
+  }
+
   USER_PRODUCT {
     uuid id
     datetime createdAt
