@@ -11,7 +11,7 @@ import {
   UserProduct,
   Credentials,
   RateLimitBucket,
-} from '../src/db/entities';
+} from '../src/entities';
 import {DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME} from '../src/utils/environment';
 
 export async function createTestDataSource() {

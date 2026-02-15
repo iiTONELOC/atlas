@@ -7,9 +7,10 @@
   "main": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./entities": "./src/db/entities/index.ts",
-    "./repositories": "./src/db/repositories/index.ts",
-    "./data-source": "./src/db/data-source.ts"
+    "./entities": "./src/entities/index.ts",
+    "./repositories": "./src/repositories/index.ts",
+    "./data-source": "./src/data-source.ts",
+    "./utils": "./src/utils/index.ts"
   },
   "scripts": {
     "test": "bun --env-file=.env.test test --no-parallel",

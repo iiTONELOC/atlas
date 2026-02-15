@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import {describe, expect, test} from 'bun:test';
 import {validate} from 'class-validator';
 import {getMetadataArgsStorage} from 'typeorm';
-import {Credentials} from '../../../src/db/entities/credentials';
+import {Credentials} from '../../../src/entities/credentials';
 
 const initBase = (c: Credentials) => {
   c.id = '550e8400-e29b-41d4-a716-446655440000';

@@ -1,8 +1,8 @@
 import {describe, test, expect, beforeAll, afterAll, beforeEach} from 'bun:test';
 import {DataSource} from 'typeorm';
-import {Source, SourceName} from '../../../src/db/entities';
-import {getSourceRepository, SourceRepository} from '../../../src/db/repositories/sourceRepository';
-import {EntityValidationError} from '../../../src/db/repositories/errors';
+import {Source, SourceName} from '../../../src/entities';
+import {getSourceRepository, SourceRepository} from '../../../src/repositories/sourceRepository';
+import {EntityValidationError} from '../../../src/repositories/errors';
 import {createTestDataSource, cleanupTestDataSource} from '../../setup';
 
 const TEST_SOURCE_NAME = SourceName.BARCODE_INDEX;

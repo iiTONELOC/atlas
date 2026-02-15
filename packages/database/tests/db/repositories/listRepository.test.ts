@@ -1,9 +1,9 @@
 import {describe, test, expect, beforeAll, afterAll, beforeEach} from 'bun:test';
 import {DataSource} from 'typeorm';
-import {List, User} from '../../../src/db/entities';
-import {getListRepository, ListRepository} from '../../../src/db/repositories/listRepository';
-import {getUserRepository} from '../../../src/db/repositories/userRepository';
-import {EntityValidationError} from '../../../src/db/repositories/errors';
+import {List, User} from '../../../src/entities';
+import {getListRepository, ListRepository} from '../../../src/repositories/listRepository';
+import {getUserRepository} from '../../../src/repositories/userRepository';
+import {EntityValidationError} from '../../../src/repositories/errors';
 import {createTestDataSource, cleanupTestDataSource} from '../../setup';
 
 const TEST_LIST_NAME = 'Test List';

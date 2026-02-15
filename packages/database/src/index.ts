@@ -1,22 +1,22 @@
 // Re-export all entities, repositories, and data source
-export * from './db/entities';
-export * from './db/data-source';
+export * from './entities';
+export * from './data-source';
 
 // Repository exports with explicit names for clarity
-export {UserRepository} from './db/repositories/userRepository';
-export {CredentialsRepository} from './db/repositories/credentialsRepository';
-export {SessionRepository} from './db/repositories/sessionRepository';
-export {TokenRepository} from './db/repositories/tokenRepository';
-export {ListRepository} from './db/repositories/listRepository';
-export {RateLimitBucketRepository} from './db/repositories/rateLimitBucketRepository';
-export {ListItemRepository} from './db/repositories/listItemRepository';
-export {ProductRepository} from './db/repositories/productRepository';
-export {UserProductRepository} from './db/repositories/userProductRepository';
-export {SourceRepository} from './db/repositories/sourceRepository';
+export {UserRepository} from './repositories/userRepository';
+export {CredentialsRepository} from './repositories/credentialsRepository';
+export {SessionRepository} from './repositories/sessionRepository';
+export {TokenRepository} from './repositories/tokenRepository';
+export {ListRepository} from './repositories/listRepository';
+export {RateLimitBucketRepository} from './repositories/rateLimitBucketRepository';
+export {ListItemRepository} from './repositories/listItemRepository';
+export {ProductRepository} from './repositories/productRepository';
+export {UserProductRepository} from './repositories/userProductRepository';
+export {SourceRepository} from './repositories/sourceRepository';
 
 // Export repository errors and validation
-export * from './db/repositories/errors';
-export * from './db/repositories/validation';
+export * from './repositories/errors';
+export * from './repositories/validation';
 
 // Export utilities
 export * from './utils/environment';

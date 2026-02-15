@@ -1,12 +1,12 @@
 import {describe, test, expect, beforeAll, afterAll, beforeEach} from 'bun:test';
 import {DataSource} from 'typeorm';
-import {Credentials} from '../../../src/db/entities';
+import {Credentials} from '../../../src/entities';
 import {createTestDataSource, cleanupTestDataSource} from '../../setup';
 import {
   CredentialsRepository,
   getCredentialsRepository,
-} from '../../../src/db/repositories/credentialsRepository';
-import {EntityValidationError} from '../../../src/db/repositories/errors';
+} from '../../../src/repositories/credentialsRepository';
+import {EntityValidationError} from '../../../src/repositories/errors';
 
 const TEST_EMAIL = 'test@test.com';
 const TEST_PASSWORD = 'password123456789badpassword';

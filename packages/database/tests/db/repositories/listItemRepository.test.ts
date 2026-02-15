@@ -1,13 +1,13 @@
 import {DataSource} from 'typeorm';
 import {createTestDataSource, cleanupTestDataSource} from '../../setup';
 import {describe, test, expect, beforeAll, afterAll, beforeEach} from 'bun:test';
-import {ListItem, List, User, Product, UserProduct} from '../../../src/db/entities';
-import {ListItemRepository} from '../../../src/db/repositories/listItemRepository';
-import {getListRepository} from '../../../src/db/repositories/listRepository';
-import {getUserRepository} from '../../../src/db/repositories/userRepository';
-import {ProductRepository} from '../../../src/db/repositories/productRepository';
-import {getUserProductRepository} from '../../../src/db/repositories/userProductRepository';
-import {EntityValidationError} from '../../../src/db/repositories/errors';
+import {ListItem, List, User, Product, UserProduct} from '../../../src/entities';
+import {ListItemRepository} from '../../../src/repositories/listItemRepository';
+import {getListRepository} from '../../../src/repositories/listRepository';
+import {getUserRepository} from '../../../src/repositories/userRepository';
+import {ProductRepository} from '../../../src/repositories/productRepository';
+import {getUserProductRepository} from '../../../src/repositories/userProductRepository';
+import {EntityValidationError} from '../../../src/repositories/errors';
 
 const TEST_USER_EMAIL = 'test@test.com';
 const TEST_USER_PASSWORD = 'password123456789badpassword';

@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import {validate} from 'class-validator';
 import {getMetadataArgsStorage} from 'typeorm';
 import {describe, expect, test} from 'bun:test';
-import {UUIDv4Entity, TimestampedEntity, SoftDeleteEntity} from '../../../src/db/entities/helpers';
+import {UUIDv4Entity, TimestampedEntity, SoftDeleteEntity} from '../../../src/entities/helpers';
 
 describe('Entity Helpers Tests', () => {
   test('UUIDv4Entity defines UUID primary column correctly', () => {

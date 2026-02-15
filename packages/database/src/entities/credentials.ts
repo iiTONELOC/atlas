@@ -1,8 +1,8 @@
 import type {User} from './user';
 import {IsEmail} from 'class-validator';
 import {TimestampedEntity} from './helpers';
-import {hashPassword} from '../../utils/hashing';
-import {validatePassword} from '../../utils/password-check';
+import {hashPassword} from '../utils/hashing';
+import {validatePassword} from '../utils/password-check';
 import {Entity, Column, OneToOne, BeforeInsert, BeforeUpdate} from 'typeorm';
 
 // email and password for user authentication

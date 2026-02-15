@@ -1,9 +1,9 @@
 import {describe, test, expect, beforeAll, afterAll, beforeEach} from 'bun:test';
 import {DataSource} from 'typeorm';
-import {Product, Source, SourceName} from '../../../src/db/entities';
-import {ProductRepository} from '../../../src/db/repositories/productRepository';
-import {getSourceRepository} from '../../../src/db/repositories/sourceRepository';
-import {EntityValidationError} from '../../../src/db/repositories/errors';
+import {Product, Source, SourceName} from '../../../src/entities';
+import {ProductRepository} from '../../../src/repositories/productRepository';
+import {getSourceRepository} from '../../../src/repositories/sourceRepository';
+import {EntityValidationError} from '../../../src/repositories/errors';
 import {createTestDataSource, cleanupTestDataSource} from '../../setup';
 
 const TEST_PRODUCT_NAME = 'Test Product';

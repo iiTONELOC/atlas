@@ -1,5 +1,5 @@
 import {describe, expect, test} from 'bun:test';
-import {AppDataSource} from '../../src/db/data-source';
+import {AppDataSource} from '../../src/data-source';
 import {DB_HOST, DB_NAME, DB_PORT, DB_USER, DB_PASSWORD} from '../../src/utils/environment';
 
 describe('Data Source Tests', () => {

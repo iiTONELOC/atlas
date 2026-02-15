@@ -1,13 +1,13 @@
 import {describe, test, expect, beforeAll, afterAll, beforeEach} from 'bun:test';
 import {DataSource} from 'typeorm';
-import {UserProduct, User, Product} from '../../../src/db/entities';
+import {UserProduct, User, Product} from '../../../src/entities';
 import {
   getUserProductRepository,
   UserProductRepository,
-} from '../../../src/db/repositories/userProductRepository';
-import {getUserRepository} from '../../../src/db/repositories/userRepository';
-import {ProductRepository} from '../../../src/db/repositories/productRepository';
-import {EntityValidationError} from '../../../src/db/repositories/errors';
+} from '../../../src/repositories/userProductRepository';
+import {getUserRepository} from '../../../src/repositories/userRepository';
+import {ProductRepository} from '../../../src/repositories/productRepository';
+import {EntityValidationError} from '../../../src/repositories/errors';
 import {createTestDataSource, cleanupTestDataSource} from '../../setup';
 
 const TEST_USER_EMAIL = 'test@test.com';

@@ -5,8 +5,8 @@ import {
   RateLimitBucket,
   RateLimitScope,
   RATE_LIMIT_RULES,
-} from '../../../src/db/entities/rateLimitBucket';
-import {RateLimitBucketRepository} from '../../../src/db/repositories/rateLimitBucketRepository';
+} from '../../../src/entities/rateLimitBucket';
+import {RateLimitBucketRepository} from '../../../src/repositories/rateLimitBucketRepository';
 import {createTestDataSource, cleanupTestDataSource} from '../../setup';
 import {EntityValidationError, RateLimitExceededError} from '../../../src';
 
